@@ -210,19 +210,17 @@ def admin_check():
 def admin_logout():
     session.clear(); return jsonify({'success': True})
 
-@app.route('/api/admin/upload', methods=['POST'])
-def admin_upload():
+@app.route('/api/admin/products/update', methods=['PUT'])
+def admin_update_product():
     if not session.get('admin'): return jsonify({'success': False}), 401
-    if 'file' not in request.files: return jsonify({'success': False, 'message': 'Fayl yo\'q'})
-    file = request.files['file']
-    if file.filename == '': return jsonify({'success': False})
-    if file and allowed_file(file.filename):
-        filename = str(uuid.uuid4())[:8] + '_' + secure_filename(file.filename)
-        os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-        file.save(os.path.join(Config.UPLOAD_FOLDER, filename))
-        url = f"/static/uploads/{filename}"
-        return jsonify({'success': True, 'url': url})
-    return jsonify({'success': False, 'message': 'Noto\'g\'ri format'})
+    d = request.json
+    p = load_products()
+    for prod in p:
+        if prod['id'] == d.get('id'):
+            prod.update(d)
+            save_products(p)
+            return jsonify({'success': True, 'product': prod})
+    return jsonify({'success': False, 'message': 'Topilmadi'}), 404
 
 @app.route('/api/admin/products', methods=['POST', 'DELETE'])
 def admin_products():
