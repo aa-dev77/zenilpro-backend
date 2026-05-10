@@ -56,7 +56,8 @@ function getQty(id) { var i = cart.find(function(x) { return x.id === id; }); re
 function renderProducts() {
     var grid = document.getElementById('productsGrid');
     if (!grid) return;
-    
+        document.getElementById('productsView').style.display = 'block';
+    grid.style.display = 'grid';
     if (products.length === 0) {
         grid.innerHTML = '<div style="text-align:center;padding:40px;grid-column:1/-1;color:#6B7280;">Mahsulotlar topilmadi</div>';
         return;
