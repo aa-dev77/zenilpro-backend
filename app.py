@@ -94,7 +94,7 @@ def webhook():
             
             if text == '/start':
                 webapp_url = request.host_url.rstrip('/')
-                welcome = f"👋 <b>Assalomu alaykum, {first_name}!</b>\n\n🔥 <b>ZenilPro</b> - Premium parfyumeriya do'koniga xush kelibsiz!"
+                welcome = f"👋 <b>Assalomu alaykum, {first_name}!</b>\n\n🔥 <b>ZenilPro</b> - uyingiz va kiyimlaringiz uchun mukammal poklik hamrohi.<b>🧼 Sifatli yuvish va tozalash vositalari dunyosiga xush kelibsiz!</b>"
                 reply_markup = {'inline_keyboard': [[{'text': '🛍 Do\'kon', 'web_app': {'url': webapp_url}}]]}
                 send_telegram(chat_id, welcome, reply_markup)
             
