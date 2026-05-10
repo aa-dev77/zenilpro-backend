@@ -2,83 +2,120 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZenilPro - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZenilPro Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --blue: #2563EB;
+            --white: #fff;
+            --gray: #F3F4F6;
+            --dark: #1F2937;
+            --red: #EF4444;
+            --green: #10B981;
+        }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; background:#F3F4F6; min-height:100vh; }
+        body { font-family:'Inter',sans-serif; background:var(--gray); min-height:100vh; }
         
         /* LOGIN */
         .login-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
-        .login-box { background:#fff; padding:40px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.1); width:100%; max-width:400px; text-align:center; }
-        .login-box .icon { font-size:48px; color:#2563EB; margin-bottom:16px; }
-        .login-box h1 { font-size:24px; margin-bottom:4px; }
-        .login-box p { color:#6B7280; margin-bottom:24px; }
-        .login-box input { width:100%; padding:14px; border:2px solid #E5E7EB; border-radius:10px; font-size:15px; margin-bottom:16px; outline:none; }
-        .login-box input:focus { border-color:#2563EB; }
-        .login-box button { width:100%; padding:14px; background:#2563EB; color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
+        .login-box { background:var(--white); padding:30px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.1); width:100%; max-width:380px; text-align:center; }
+        .login-box .icon { font-size:40px; color:var(--blue); margin-bottom:12px; }
+        .login-box h1 { font-size:22px; margin-bottom:4px; }
+        .login-box p { color:#6B7280; margin-bottom:20px; font-size:14px; }
+        .login-box input { width:100%; padding:12px; border:2px solid #E5E7EB; border-radius:10px; font-size:15px; margin-bottom:12px; outline:none; }
+        .login-box input:focus { border-color:var(--blue); }
+        .login-box button { width:100%; padding:14px; background:var(--blue); color:var(--white); border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
         .login-box a { display:block; margin-top:12px; color:#6B7280; text-decoration:none; font-size:14px; }
         
         /* DASHBOARD */
         .dash { display:none; }
-        .dash-nav { background:#1F2937; color:#fff; padding:12px 20px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10; flex-wrap:wrap; }
-        .dash-nav h2 { font-size:18px; }
-        .dash-nav .tabs { display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
-        .dash-nav button { padding:8px 14px; background:rgba(255,255,255,.1); color:#D1D5DB; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; white-space:nowrap; }
-        .dash-nav button.active { background:#2563EB; color:#fff; }
-        .dash-nav .logout { background:rgba(239,68,68,.2); color:#EF4444; }
-        .dash-content { padding:20px; max-width:1200px; margin:0 auto; }
+        
+        /* TOP BAR */
+        .topbar { background:var(--dark); color:var(--white); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+        .topbar h3 { font-size:15px; }
+        .topbar .menu-btn { background:none; border:none; color:var(--white); font-size:22px; cursor:pointer; display:none; }
+        .topbar-actions { display:flex; gap:8px; align-items:center; }
+        .topbar-actions button { padding:7px 12px; border:none; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; }
+        .btn-logout { background:rgba(239,68,68,.2); color:var(--red); }
+        
+        /* MAIN LAYOUT */
+        .main-layout { display:flex; min-height:calc(100vh - 52px); }
+        
+        /* SIDEBAR */
+        .sidebar { width:220px; background:var(--white); border-right:1px solid #E5E7EB; padding:12px; position:sticky; top:52px; height:calc(100vh - 52px); overflow-y:auto; }
+        .sidebar button { display:flex; align-items:center; gap:8px; width:100%; padding:12px; border:none; background:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:500; color:#374151; margin-bottom:4px; text-align:left; }
+        .sidebar button:hover { background:var(--gray); }
+        .sidebar button.active { background:var(--blue); color:var(--white); }
+        .sidebar button i { width:20px; text-align:center; }
+        
+        /* CONTENT */
+        .content { flex:1; padding:16px; overflow-y:auto; }
         
         /* CARDS */
-        .card { background:#fff; border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
-        .card h3 { margin-bottom:16px; font-size:16px; }
+        .card { background:var(--white); border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+        .card h3 { margin-bottom:12px; font-size:16px; }
+        
+        /* STATS */
+        .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px; }
+        .stat { background:var(--white); padding:16px; border-radius:12px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+        .stat .num { font-size:28px; font-weight:700; color:var(--blue); }
+        .stat .label { font-size:12px; color:#6B7280; margin-top:4px; }
         
         /* TABLE */
-        table { width:100%; border-collapse:collapse; }
+        .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; min-width:600px; }
         th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #E5E7EB; font-size:13px; }
-        th { background:#F9FAFB; font-weight:600; color:#6B7280; font-size:11px; text-transform:uppercase; }
-        td img { width:50px; height:50px; border-radius:8px; object-fit:cover; }
+        th { background:#F9FAFB; font-weight:600; color:#6B7280; font-size:11px; text-transform:uppercase; white-space:nowrap; }
+        td img { width:45px; height:45px; border-radius:8px; object-fit:cover; }
         
         /* FORM */
-        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        .form-grid .full { grid-column:1/-1; }
-        .form-group { margin-bottom:4px; }
-        .form-group label { display:block; font-size:13px; font-weight:500; color:#374151; margin-bottom:4px; }
-        .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 12px; border:2px solid #E5E7EB; border-radius:8px; font-size:14px; font-family:inherit; outline:none; transition:border-color .2s; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:#2563EB; }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .form-group label { display:block; font-size:12px; font-weight:500; color:#374151; margin-bottom:4px; }
+        .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px; border:2px solid #E5E7EB; border-radius:8px; font-size:14px; font-family:inherit; outline:none; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--blue); }
         
         /* FILE UPLOAD */
-        .file-upload { border:2px dashed #E5E7EB; border-radius:12px; padding:30px; text-align:center; cursor:pointer; transition:all .2s; }
-        .file-upload:hover { border-color:#2563EB; background:#F0F5FF; }
-        .file-upload i { font-size:36px; color:#2563EB; margin-bottom:8px; }
-        .file-upload p { color:#6B7280; font-size:13px; }
-        .file-upload img { max-width:200px; max-height:200px; margin-top:12px; border-radius:8px; }
-        .file-upload input { display:none; }
+        .file-box { border:2px dashed #E5E7EB; border-radius:12px; padding:20px; text-align:center; cursor:pointer; }
+        .file-box i { font-size:32px; color:var(--blue); }
+        .file-box p { color:#6B7280; font-size:12px; margin-top:4px; }
+        .file-box img { max-width:150px; max-height:150px; margin-top:8px; border-radius:8px; }
+        .file-box input { display:none; }
         
         /* BUTTONS */
         .btn { padding:8px 16px; border:none; border-radius:8px; cursor:pointer; font-weight:500; font-size:13px; display:inline-flex; align-items:center; gap:6px; }
-        .btn-blue { background:#2563EB; color:#fff; }
-        .btn-red { background:#EF4444; color:#fff; }
-        .btn-green { background:#10B981; color:#fff; }
-        .btn-gray { background:#6B7280; color:#fff; }
+        .btn-blue { background:var(--blue); color:var(--white); }
+        .btn-red { background:var(--red); color:var(--white); }
+        .btn-green { background:var(--green); color:var(--white); }
         
         /* BADGES */
-        .badge { padding:4px 10px; border-radius:50px; font-size:11px; font-weight:600; }
-        .badge-green { background:#D1FAE5; color:#10B981; }
+        .badge { padding:3px 8px; border-radius:50px; font-size:11px; font-weight:600; }
+        .badge-green { background:#D1FAE5; color:var(--green); }
         .badge-yellow { background:#FEF3C7; color:#F59E0B; }
-        .badge-red { background:#FEE2E2; color:#EF4444; }
         
-        /* ORDERS */
-        .order-card { background:#fff; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
-        .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-        .order-id { font-weight:700; color:#2563EB; font-size:16px; }
+        /* ORDER CARD */
+        .order-card { background:var(--white); border-radius:12px; padding:14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+        .order-card .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px; }
+        .order-id { font-weight:700; color:var(--blue); }
         
+        /* OVERLAY */
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); z-index:99; }
+        
+        /* MOBILE */
         @media (max-width:768px) {
+            .topbar .menu-btn { display:block; }
+            .sidebar {
+                position:fixed; left:-250px; top:0; height:100vh; z-index:200;
+                transition:left 0.3s; width:250px; padding-top:60px;
+            }
+            .sidebar.open { left:0; }
+            .overlay.show { display:block; }
+            .content { width:100%; }
             .form-grid { grid-template-columns:1fr; }
-            .dash-nav { gap:8px; }
-            .dash-nav .tabs { width:100%; margin-top:8px; justify-content:flex-start; }
+            .stats { grid-template-columns:1fr 1fr; }
+            table { font-size:11px; }
+            th, td { padding:8px; }
         }
     </style>
 </head>
@@ -90,82 +127,104 @@
         <div class="icon"><i class="fa-solid fa-spray-can-sparkles"></i></div>
         <h1>ZenilPro Admin</h1>
         <p>Boshqaruv paneli</p>
-        <input type="password" id="passInput" placeholder="Parolni kiriting" onkeydown="if(event.key==='Enter')login()">
-        <button onclick="login()"><i class="fa-solid fa-right-to-bracket"></i> Kirish</button>
+        <input type="password" id="passInput" placeholder="Parolni kiriting">
+        <button onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Kirish</button>
         <a href="/">← Do'konga qaytish</a>
     </div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashPage" class="dash">
-    <nav class="dash-nav">
-        <h2>🛍 ZenilPro Admin</h2>
-        <div class="tabs">
-            <button class="active" onclick="showTab('products')">📦 Mahsulotlar</button>
-            <button onclick="showTab('add')">➕ Qo'shish</button>
-            <button onclick="showTab('orders')">📋 Buyurtmalar</button>
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+    
+    <div class="topbar">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <h3>🛍 ZenilPro Admin</h3>
+        <div class="topbar-actions">
+            <a href="/" style="color:#D1D5DB;text-decoration:none;font-size:12px;">Do'kon</a>
+            <button class="btn-logout" onclick="doLogout()">🚪 Chiqish</button>
         </div>
-        <button class="logout" onclick="logout()">🚪 Chiqish</button>
-    </nav>
-    <div class="dash-content" id="tabContent"></div>
+    </div>
+    
+    <div class="main-layout">
+        <div class="sidebar" id="sidebar">
+            <button class="active" onclick="showTab('products')"><i class="fa-solid fa-box"></i> Mahsulotlar</button>
+            <button onclick="showTab('add')"><i class="fa-solid fa-plus-circle"></i> Qo'shish</button>
+            <button onclick="showTab('orders')"><i class="fa-solid fa-receipt"></i> Buyurtmalar</button>
+        </div>
+        
+        <div class="content" id="tabContent"></div>
+    </div>
 </div>
 
 <script>
-let prods = [];
-let ords = [];
 let uploadedImage = '';
 
 // Check login
-fetch('/api/admin/check').then(r=>r.json()).then(d=>{ if(d.is_admin){ showDash(); loadAll(); } });
+fetch('/api/admin/check').then(r=>r.json()).then(d=>{ if(d.is_admin){ showDash(); loadTab('products'); } });
 
-function login() {
-    let p = document.getElementById('passInput').value;
+function doLogin(){
     fetch('/api/admin/login', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({password:p})
+        body:JSON.stringify({password:document.getElementById('passInput').value})
     }).then(r=>r.json()).then(d=>{
-        if(d.success){ showDash(); loadAll(); }
+        if(d.success){ showDash(); loadTab('products'); }
         else alert('Noto\'g\'ri parol!');
     });
 }
 
-function logout(){ fetch('/api/admin/logout',{method:'POST'}).then(()=>location.reload()); }
+function doLogout(){ fetch('/api/admin/logout',{method:'POST'}).then(()=>location.reload()); }
 
 function showDash(){
     document.getElementById('loginPage').style.display='none';
     document.getElementById('dashPage').style.display='block';
 }
 
+function toggleSidebar(){
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('show');
+}
+
+function closeSidebar(){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+}
+
 function showTab(t){
-    document.querySelectorAll('.dash-nav .tabs button').forEach(b=>b.classList.remove('active'));
+    closeSidebar();
+    document.querySelectorAll('.sidebar button').forEach(b=>b.classList.remove('active'));
     event.target.classList.add('active');
+    loadTab(t);
+}
+
+function loadTab(t){
     if(t==='products') loadProducts();
     else if(t==='add') showAddForm();
     else if(t==='orders') loadOrders();
 }
 
-function loadAll(){ loadProducts(); }
-
 // ==================== PRODUCTS ====================
 function loadProducts(){
     fetch('/api/products').then(r=>r.json()).then(d=>{
         if(d.success){
-            prods = d.products;
-            let html = `<div class="card">
-                <h3>📦 Barcha Mahsulotlar (${prods.length} ta)</h3>
-                <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>Rasm</th><th>Nomi</th><th>Kat.</th><th>Narx</th><th>Qoldiq</th><th>Amal</th></tr></thead>
-                    <tbody>`;
-            prods.forEach(p=>{
+            let html = `<div class="stats">
+                <div class="stat"><div class="num">${d.products.length}</div><div class="label">Jami mahsulot</div></div>
+                <div class="stat"><div class="num">${new Set(d.products.map(p=>p.category)).size}</div><div class="label">Kategoriya</div></div>
+                <div class="stat"><div class="num">${d.products.reduce((s,p)=>s+p.in_stock,0)}</div><div class="label">Jami qoldiq</div></div>
+            </div>
+            <div class="card"><h3>📦 Mahsulotlar</h3>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Rasm</th><th>Nomi</th><th>Kat.</th><th>Narx</th><th>Qoldiq</th><th></th></tr></thead>
+                <tbody>`;
+            d.products.forEach(p=>{
                 html += `<tr>
-                    <td><img src="${p.image}" onerror="this.src='https://placehold.co/50'"></td>
+                    <td><img src="${p.image}" onerror="this.src='https://placehold.co/45'"></td>
                     <td><strong>${p.name}</strong></td>
                     <td>${p.category}</td>
-                    <td><strong style="color:#2563EB">${(p.price+'').replace(/\B(?=(\d{3})+(?!\d))/g,' ')} so'm</strong></td>
-                    <td><span class="badge ${p.in_stock>5?'badge-green':'badge-yellow'}">${p.in_stock} dona</span></td>
-                    <td><button class="btn btn-red" onclick="delProd('${p.id}')"><i class="fa-solid fa-trash"></i></button></td>
+                    <td><strong style="color:var(--blue)">${(p.price+'').replace(/\B(?=(\d{3})+(?!\d))/g,' ')}</strong></td>
+                    <td><span class="badge ${p.in_stock>5?'badge-green':'badge-yellow'}">${p.in_stock}</span></td>
+                    <td><button class="btn btn-red" onclick="delProd('${p.id}')">🗑</button></td>
                 </tr>`;
             });
             html += '</tbody></table></div></div>';
@@ -176,78 +235,74 @@ function loadProducts(){
 
 function delProd(id){
     if(!confirm('O\'chirilsinmi?')) return;
-    fetch('/api/admin/products',{
-        method:'DELETE',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({id})
-    }).then(r=>r.json()).then(d=>{ if(d.success){ alert('O\'chirildi!'); loadProducts(); } });
+    fetch('/api/admin/products',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})})
+    .then(r=>r.json()).then(d=>{ if(d.success){ alert('O\'chirildi!'); loadProducts(); } });
 }
 
-// ==================== ADD PRODUCT ====================
+// ==================== ADD ====================
 function showAddForm(){
     uploadedImage = '';
     document.getElementById('tabContent').innerHTML = `
-        <div class="card">
-            <h3>➕ Yangi Mahsulot Qo'shish</h3>
-            <form onsubmit="addProd(event)" style="margin-top:16px;">
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label>📸 Mahsulot Rasmi</label>
-                        <div class="file-upload" id="fileUploadBox" onclick="document.getElementById('fileInput').click()">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <p>Rasm yuklash uchun bosing</p>
-                            <p style="font-size:11px;color:#9CA3AF;">PNG, JPG, WEBP (max 16MB)</p>
-                            <img id="previewImg" style="display:none;">
-                            <input type="file" id="fileInput" accept="image/*" onchange="uploadImage(this)">
-                        </div>
-                        <div id="uploadStatus" style="margin-top:8px;font-size:13px;color:#10B981;display:none;"></div>
+        <div class="card"><h3>➕ Yangi Mahsulot</h3>
+        <form onsubmit="addProd(event)" style="margin-top:12px;">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>Rasm</label>
+                    <div class="file-box" onclick="document.getElementById('fileInput').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p>Rasm yuklash (png, jpg, webp)</p>
+                        <img id="previewImg" style="display:none;">
+                        <input type="file" id="fileInput" accept="image/*" onchange="uploadFile(this)">
                     </div>
-                    <div class="form-group"><label>Nomi *</label><input id="aname" required></div>
-                    <div class="form-group"><label>Kategoriya</label><select id="acat">
-                        <option value="parfum">Parfyumeriya</option>
-                        <option value="cosmetics">Kosmetika</option>
-                        <option value="dishes">Idish-tovoq</option>
-                        <option value="clothes">Kiyim</option>
-                        <option value="powders">Kukunlar</option>
-                    </select></div>
-                    <div class="form-group"><label>Narx (so'm) *</label><input type="number" id="aprice" required placeholder="150000"></div>
-                    <div class="form-group"><label>Eski narx</label><input type="number" id="aoldprice" placeholder="200000"></div>
-                    <div class="form-group"><label>Soni</label><input type="number" id="astock" value="10"></div>
-                    <div class="form-group"><label>Chegirma %</label><input type="number" id="adisc" value="0" min="0" max="99"></div>
-                    <div class="form-group full"><label>Tavsif</label><textarea id="adesc" rows="2" placeholder="Mahsulot haqida..."></textarea></div>
+                    <div id="uploadStatus" style="margin-top:6px;font-size:12px;display:none;"></div>
                 </div>
-                <button type="submit" class="btn btn-blue" style="margin-top:16px;padding:12px 24px;font-size:15px;">
-                    <i class="fa-solid fa-plus"></i> Mahsulot Qo'shish
-                </button>
-            </form>
-        </div>`;
+                <div class="form-group"><label>Nomi *</label><input id="aname" required></div>
+                <div class="form-group"><label>Kategoriya</label><select id="acat">
+                    <option value="parfum">Parfyumeriya</option>
+                    <option value="cosmetics">Kosmetika</option>
+                    <option value="dishes">Idish-tovoq</option>
+                    <option value="clothes">Kiyim</option>
+                    <option value="powders">Kukunlar</option>
+                </select></div>
+                <div class="form-group"><label>Narx *</label><input type="number" id="aprice" required></div>
+                <div class="form-group"><label>Eski narx</label><input type="number" id="aoldprice"></div>
+                <div class="form-group"><label>Soni</label><input type="number" id="astock" value="10"></div>
+                <div class="form-group"><label>Chegirma %</label><input type="number" id="adisc" value="0"></div>
+                <div class="form-group" style="grid-column:1/-1;"><label>Tavsif</label><textarea id="adesc" rows="2"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-blue" style="margin-top:12px;padding:12px 24px;font-size:14px;">
+                <i class="fa-solid fa-plus"></i> Qo'shish
+            </button>
+        </form></div>`;
 }
 
-function uploadImage(input){
+function uploadFile(input){
     if(!input.files[0]) return;
-    let formData = new FormData();
-    formData.append('file', input.files[0]);
+    let fd = new FormData();
+    fd.append('file', input.files[0]);
     
-    document.getElementById('uploadStatus').style.display = 'block';
-    document.getElementById('uploadStatus').textContent = '⏳ Yuklanmoqda...';
+    let status = document.getElementById('uploadStatus');
+    status.style.display = 'block';
+    status.textContent = '⏳ Yuklanmoqda...';
+    status.style.color = '#6B7280';
     
-    fetch('/api/admin/upload', {method:'POST', body:formData})
+    fetch('/api/admin/upload', {method:'POST', body:fd})
     .then(r=>r.json())
     .then(d=>{
         if(d.success){
             uploadedImage = d.url;
             document.getElementById('previewImg').src = d.url;
             document.getElementById('previewImg').style.display = 'block';
-            document.getElementById('uploadStatus').textContent = '✅ Rasm yuklandi!';
-            document.getElementById('uploadStatus').style.color = '#10B981';
+            status.textContent = '✅ Yuklandi!';
+            status.style.color = '#10B981';
         } else {
-            document.getElementById('uploadStatus').textContent = '❌ ' + (d.message || 'Xatolik');
-            document.getElementById('uploadStatus').style.color = '#EF4444';
+            status.textContent = '❌ ' + (d.message||'Xatolik');
+            status.style.color = '#EF4444';
         }
     })
     .catch(()=>{
-        document.getElementById('uploadStatus').textContent = '❌ Server xatolik';
-        document.getElementById('uploadStatus').style.color = '#EF4444';
+        status.textContent = '❌ Server xatolik';
+        status.style.color = '#EF4444';
     });
 }
 
@@ -271,7 +326,7 @@ function addProd(e){
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify(data)
     }).then(r=>r.json()).then(d=>{
-        if(d.success){ alert('✅ Mahsulot qo\'shildi!'); showTab('products'); }
+        if(d.success){ alert('✅ Qo\'shildi!'); loadTab('products'); }
         else alert('❌ Xatolik!');
     });
 }
@@ -280,25 +335,24 @@ function addProd(e){
 function loadOrders(){
     fetch('/api/orders').then(r=>r.json()).then(d=>{
         if(d.success){
-            ords = d.orders;
-            let html = `<div class="card"><h3>📋 Buyurtmalar (${ords.length} ta)</h3>`;
-            if(ords.length === 0) html += '<p style="color:#6B7280;text-align:center;padding:40px;">Buyurtmalar yo\'q</p>';
-            else {
-                ords.forEach(o=>{
-                    html += `<div class="order-card">
-                        <div class="order-header">
-                            <span class="order-id">#${o.order_id}</span>
-                            <span class="badge ${o.status==='pending'?'badge-yellow':o.status==='delivered'?'badge-green':'badge-red'}">${o.status_text||o.status}</span>
-                        </div>
-                        <div style="margin-bottom:6px;"><strong>${o.customer_name}</strong> | ${o.phone}</div>
-                        <div style="color:#6B7280;font-size:13px;margin-bottom:6px;">${o.items?.map(i=>i.name+' ×'+i.quantity).join(', ')}</div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <strong style="font-size:16px;color:#2563EB;">${(o.total+'').replace(/\B(?=(\d{3})+(?!\d))/g,' ')} so'm</strong>
-                            <small style="color:#9CA3AF;">${new Date(o.created_at).toLocaleDateString()}</small>
-                        </div>
-                    </div>`;
-                });
-            }
+            let html = `<div class="stats">
+                <div class="stat"><div class="num">${d.orders.length}</div><div class="label">Jami buyurtma</div></div>
+                <div class="stat"><div class="num">${d.orders.filter(o=>o.status==='pending').length}</div><div class="label">Kutilmoqda</div></div>
+                <div class="stat"><div class="num">${(d.orders.reduce((s,o)=>s+o.total,0)+'').replace(/\B(?=(\d{3})+(?!\d))/g,' ')}</div><div class="label">Jami summa</div></div>
+            </div>
+            <div class="card"><h3>📋 Buyurtmalar</h3>`;
+            if(d.orders.length===0) html += '<p style="color:#6B7280;text-align:center;padding:30px;">Buyurtmalar yo\'q</p>';
+            else d.orders.forEach(o=>{
+                html += `<div class="order-card">
+                    <div class="top"><span class="order-id">#${o.order_id}</span><span class="badge ${o.status==='pending'?'badge-yellow':'badge-green'}">${o.status_text||o.status}</span></div>
+                    <div><strong>${o.customer_name}</strong> | ${o.phone}</div>
+                    <div style="color:#6B7280;font-size:12px;">${o.items?.map(i=>i.name+' ×'+i.quantity).join(', ')}</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+                        <strong style="color:var(--blue);">${(o.total+'').replace(/\B(?=(\d{3})+(?!\d))/g,' ')} so'm</strong>
+                        <small style="color:#9CA3AF;">${new Date(o.created_at).toLocaleDateString()}</small>
+                    </div>
+                </div>`;
+            });
             html += '</div>';
             document.getElementById('tabContent').innerHTML = html;
         }
