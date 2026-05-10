@@ -287,7 +287,8 @@ body {
   min-width: 24px;
   text-align: center;
 }
-
+/* Grid doim ko'rinib turishi uchun */
+.products-grid { display: grid !important; min-height: 200px; }
 /* VIEWS */
 .view {
   display: none;
