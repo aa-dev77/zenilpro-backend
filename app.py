@@ -61,6 +61,7 @@ def load_users(): return load_json(Config.USERS_FILE, {})
 def save_users(u): save_json(Config.USERS_FILE, u)
 
 def send_telegram(chat_id, text, reply_markup=None):
+    if not Config.BOT_TOKEN or Config.BOT_TOKEN == 'YOUR_BOT_TOKEN': return None
     url = f"https://api.telegram.org/bot{Config.BOT_TOKEN}/sendMessage"
     payload = {'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}
     if reply_markup: payload['reply_markup'] = json.dumps(reply_markup)
@@ -72,6 +73,7 @@ def send_telegram(chat_id, text, reply_markup=None):
 def webhook():
     try:
         data = request.json
+        
         if 'message' in data:
             msg = data['message']
             chat_id = msg['chat']['id']
@@ -79,44 +81,27 @@ def webhook():
             user = msg.get('from', {})
             first_name = user.get('first_name', 'Foydalanuvchi')
             
+            # /start - FAQAT DO'KONGA KIRISH TUGMASI
             if text == '/start':
                 webapp_url = request.host_url.rstrip('/')
-                welcome = f"""🎉 <b>Assalomu alaykum, {first_name}!</b>
-
-🔥 <b>{Config.SHOP_NAME}</b> - Premium Parfyumeriya Do'koni
-
-🛍 Pastdagi tugmani bosib do'konga kiring!"""
                 
+                # Qisqa xabar
+                welcome = f"👋 <b>Assalomu alaykum, {first_name}!</b>\n\n🔥 <b>ZenilPro</b> - Premium parfyumeriya do'koniga xush kelibsiz!"
+                
+                # FAQAT BIR TUGMA - Do'konga kirish
                 reply_markup = {
                     'inline_keyboard': [[{
-                        'text': '🛍 Do\'konga kirish',
+                        'text': '🛍 Do\'kon',
                         'web_app': {'url': webapp_url}
-                    }], [{
-                        'text': 'ℹ️ Yordam', 'callback_data': 'help'
                     }]]
                 }
-                send_telegram(chat_id, welcome, reply_markup)
                 
-                menu_markup = {
-                    'keyboard': [
-                        [{'text': '🛍 Katalog'}, {'text': '🛒 Savat'}],
-                        [{'text': '❤️ Sevimlilar'}, {'text': '👤 Profil'}]
-                    ],
-                    'resize_keyboard': True
-                }
-                send_telegram(chat_id, "Tez menyu:", menu_markup)
+                send_telegram(chat_id, welcome, reply_markup)
             
-            elif text == '/menu' or text == '🛍 Katalog':
-                webapp_url = request.host_url.rstrip('/')
-                reply_markup = {'inline_keyboard': [[{'text': '🛍 Do\'konga kirish', 'web_app': {'url': webapp_url}}]]}
-                send_telegram(chat_id, "Do'konga kirish:", reply_markup)
-            
-            elif text == '/help':
-                send_telegram(chat_id, "📚 Yordam: /start - Botni ishga tushirish, /menu - Katalog")
-            
+            # /admin
             elif text == '/admin':
                 if Config.is_admin(user.get('id')):
-                    send_telegram(chat_id, f"🔐 Admin: {request.host_url.rstrip('/')}/admin\nParol: {Config.ADMIN_PASSWORD}")
+                    send_telegram(chat_id, f"🔐 <b>Admin Panel</b>\n\n🔗 {request.host_url.rstrip('/')}/admin\n🔑 Parol: {Config.ADMIN_PASSWORD}")
                 else:
                     send_telegram(chat_id, "❌ Siz admin emassiz!")
         
@@ -210,17 +195,19 @@ def admin_check():
 def admin_logout():
     session.clear(); return jsonify({'success': True})
 
-@app.route('/api/admin/products/update', methods=['PUT'])
-def admin_update_product():
+@app.route('/api/admin/upload', methods=['POST'])
+def admin_upload():
     if not session.get('admin'): return jsonify({'success': False}), 401
-    d = request.json
-    p = load_products()
-    for prod in p:
-        if prod['id'] == d.get('id'):
-            prod.update(d)
-            save_products(p)
-            return jsonify({'success': True, 'product': prod})
-    return jsonify({'success': False, 'message': 'Topilmadi'}), 404
+    if 'file' not in request.files: return jsonify({'success': False, 'message': 'Fayl yo\'q'})
+    file = request.files['file']
+    if file.filename == '': return jsonify({'success': False})
+    if file and allowed_file(file.filename):
+        filename = str(uuid.uuid4())[:8] + '_' + secure_filename(file.filename)
+        os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+        file.save(os.path.join(Config.UPLOAD_FOLDER, filename))
+        url = f"/static/uploads/{filename}"
+        return jsonify({'success': True, 'url': url})
+    return jsonify({'success': False, 'message': 'Format noto\'g\'ri'})
 
 @app.route('/api/admin/products', methods=['POST', 'DELETE'])
 def admin_products():
@@ -234,11 +221,40 @@ def admin_products():
         pid = request.json.get('id')
         p = [x for x in p if x['id'] != pid]; save_products(p); return jsonify({'success': True})
 
+@app.route('/api/admin/products/update', methods=['PUT'])
+def admin_update_product():
+    if not session.get('admin'): return jsonify({'success': False}), 401
+    d = request.json
+    p = load_products()
+    for prod in p:
+        if prod['id'] == d.get('id'):
+            prod.update(d)
+            save_products(p)
+            return jsonify({'success': True, 'product': prod})
+    return jsonify({'success': False, 'message': 'Topilmadi'}), 404
+
+@app.route('/api/admin/orders/<order_id>/status', methods=['PUT'])
+def update_order_status(order_id):
+    if not session.get('admin'): return jsonify({'success': False}), 401
+    d = request.json
+    orders = load_orders()
+    for o in orders:
+        if o['order_id'] == order_id:
+            o['status'] = d.get('status', o['status'])
+            status_map = {'pending':'Tayyorlanmoqda','confirmed':'Yo\'lda','delivered':'Yetkazilgan','cancelled':'Bekor qilingan'}
+            o['status_text'] = status_map.get(o['status'], o['status'])
+            save_orders(orders)
+            return jsonify({'success': True})
+    return jsonify({'success': False}), 404
+
 if __name__ == '__main__':
     os.makedirs('templates', exist_ok=True)
     os.makedirs('static/css', exist_ok=True)
     os.makedirs('static/js', exist_ok=True)
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
     port = int(os.environ.get('PORT', 5000))
-    print(f"ZenilPro running on port {port}")
+    print(f"\n🚀 ZenilPro running on port {port}")
+    print(f"🌐 http://localhost:{port}")
+    print(f"🔐 Admin: http://localhost:{port}/admin")
+    print(f"🔑 Parol: {Config.ADMIN_PASSWORD}\n")
     app.run(debug=False, host='0.0.0.0', port=port)
