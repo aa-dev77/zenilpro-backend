@@ -9,6 +9,7 @@ let userData = null;
 let isAdmin = false;
 
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('productsView').style.display = 'block';
     setTimeout(function() {
         var loader = document.getElementById('pageLoader');
         if (loader) { loader.style.opacity = '0'; setTimeout(function() { if (loader) loader.style.display = 'none'; }, 300); }
@@ -259,6 +260,12 @@ async function saveProfile() {
 }
 
 function showView(v) {
+    document.getElementById('productsView').style.display = 'none';
+    document.getElementById('detailView').style.display = 'none';
+    document.getElementById('cartView').style.display = 'none';
+    document.getElementById('checkoutView').style.display = 'none';
+    document.getElementById('favoritesView').style.display = 'none';
+    document.getElementById('profileView').style.display = 'none';
     curView = v;
     
     // HAMMA VIEWLARNI YASHIRISH
