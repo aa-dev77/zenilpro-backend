@@ -1,3 +1,4 @@
+// ==================== GLOBALS ====================
 let products = [];
 let cart = JSON.parse(localStorage.getItem('zc') || '[]');
 let favs = JSON.parse(localStorage.getItem('zf') || '[]');
@@ -10,6 +11,17 @@ let isAdmin = false;
 
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', function() {
+    // Loaderni 1 sekund ushlab turish
+    setTimeout(function() {
+        const loader = document.getElementById('pageLoader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(function() { 
+                if(loader) loader.style.display = 'none'; 
+            }, 300);
+        }
+    }, 1000);
+    
     // Telegram
     if (window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
@@ -34,15 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // DARHOL MAHSULOTLARNI YUKLASH
     loadProducts();
     updateBadge();
-    
-    // Loaderni yashirish
-    setTimeout(function() {
-        const loader = document.getElementById('pageLoader');
-        if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(function() { loader.style.display = 'none'; }, 300);
-        }
-    }, 1500);
 });
 
 async function checkAdmin(uid) {
@@ -56,8 +59,11 @@ async function checkAdmin(uid) {
 // ==================== PRODUCTS ====================
 async function loadProducts() {
     const grid = document.getElementById('productsGrid');
+    if (!grid) return;
+    
+    // Loading ko'rsatish
     grid.style.display = 'grid';
-    grid.innerHTML = '<div style="text-align:center;padding:40px;grid-column:1/-1;"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;color:#2563EB;"></i><p style="margin-top:12px;color:#6B7280;">Yuklanmoqda...</p></div>';
+    grid.innerHTML = '<div style="text-align:center;padding:40px;grid-column:1/-1;"><i class="fa-solid fa-spinner fa-spin" style="font-size:28px;color:#2563EB;"></i></div>';
     
     try {
         const r = await fetch('/api/products?category=' + curCat);
@@ -76,6 +82,13 @@ function getQty(id) { const i = cart.find(i => i.id === id); return i ? i.quanti
 
 function renderProducts() {
     const grid = document.getElementById('productsGrid');
+    if (!grid) return;
+    
+    // Grid ko'rinib turishini kafolatlash
+    grid.style.display = 'grid';
+    grid.style.visibility = 'visible';
+    grid.style.opacity = '1';
+    
     if (products.length === 0) {
         grid.innerHTML = '<div style="text-align:center;padding:40px;grid-column:1/-1;color:#6B7280;">Mahsulotlar topilmadi</div>';
         return;
@@ -90,9 +103,9 @@ function renderProducts() {
             <img src="${p.image}" alt="" onerror="this.src='https://placehold.co/400'">
             <div class="info">
                 <div class="name">${p.name}</div>
-                <div class="price-row">
+                <div class="price-block">
                     <span class="price">${fmt(p.price)} so'm</span>
-                    ${p.old_price>p.price?`<span class="old">${fmt(p.old_price)}</span>`:''}
+                    ${p.old_price>p.price?`<span class="old">${fmt(p.old_price)} so'm</span>`:''}
                 </div>
                 ${inc ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button onclick="chgCart('${p.id}',-1)">−</button><span>${q}</span><button onclick="chgCart('${p.id}',1)">+</button></div>` 
                 : `<button class="buy-btn" onclick="event.stopPropagation();addCart('${p.id}')"><i class="fa-solid fa-cart-shopping"></i> Savatga</button>`}
@@ -143,6 +156,7 @@ function saveCart() { localStorage.setItem('zc', JSON.stringify(cart)); }
 function updateBadge() {
     const c = cart.reduce((s, i) => s + i.quantity, 0);
     const b = document.getElementById('cartBadge');
+    if (!b) return;
     b.textContent = c;
     b.style.display = c > 0 ? 'flex' : 'none';
 }
@@ -151,6 +165,7 @@ function renderCart() {
     const l = document.getElementById('cartList');
     const e = document.getElementById('emptyCart');
     const b = document.getElementById('cartBottom');
+    if (!l || !e || !b) return;
     if (cart.length === 0) { l.innerHTML = ''; e.style.display = 'block'; b.style.display = 'none'; return; }
     e.style.display = 'none'; b.style.display = 'block';
     l.innerHTML = cart.map(i => `
@@ -215,9 +230,10 @@ function renderFavs() {
     const fp = products.filter(p => favs.includes(p.id));
     const g = document.getElementById('favGrid');
     const e = document.getElementById('emptyFav');
+    if (!g || !e) return;
     if (fp.length === 0) { g.innerHTML = ''; e.style.display = 'block'; return; }
     e.style.display = 'none';
-    g.innerHTML = fp.map(p => `<div class="card" onclick="openDetail('${p.id}')"><button class="fav act"><i class="fa-solid fa-heart"></i></button><img src="${p.image}"><div class="info"><div class="name">${p.name}</div><div class="price-row"><span class="price">${fmt(p.price)} so'm</span></div></div></div>`).join('');
+    g.innerHTML = fp.map(p => `<div class="card" onclick="openDetail('${p.id}')"><button class="fav act"><i class="fa-solid fa-heart"></i></button><img src="${p.image}"><div class="info"><div class="name">${p.name}</div><div class="price-block"><span class="price">${fmt(p.price)} so'm</span></div></div></div>`).join('');
 }
 
 // ==================== PROFILE ====================
@@ -228,11 +244,13 @@ function loadProfile() {
         document.getElementById('editUser').value = userData.username || '';
         document.getElementById('editPhone').value = userData.phone_number || '';
     }
-    document.getElementById('adminSection').style.display = isAdmin ? 'block' : 'none';
+    const as = document.getElementById('adminSection');
+    if (as) as.style.display = isAdmin ? 'block' : 'none';
     loadOrders();
 }
 async function loadOrders() {
     const c = document.getElementById('profileOrders');
+    if (!c) return;
     if (!userData?.id) { c.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:20px;">Yuklanmadi</p>'; return; }
     try {
         const r = await fetch('/api/orders?user_id='+userData.id);
@@ -257,38 +275,65 @@ async function saveProfile() {
 // ==================== VIEWS ====================
 function showView(v) {
     curView = v;
-    ['productsView','detailView','cartView','checkoutView','favoritesView','profileView'].forEach(id => {
+    
+    // BARCHA VIEWLARNI YASHIRISH
+    const views = ['productsView','detailView','cartView','checkoutView','favoritesView','profileView'];
+    views.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
-    document.getElementById('header').style.display = (v === 'products') ? 'block' : 'none';
-    document.querySelector('.bottom-nav').style.display = (v === 'checkout') ? 'none' : 'flex';
     
+    // HEADER VA NAV
+    const header = document.getElementById('header');
+    const nav = document.querySelector('.bottom-nav');
+    if (header) header.style.display = (v === 'products') ? 'block' : 'none';
+    if (nav) nav.style.display = (v === 'checkout') ? 'none' : 'flex';
+    
+    // KO'RSATISH
     const map = {products:'productsView', detail:'detailView', cart:'cartView', checkout:'checkoutView', favorites:'favoritesView', profile:'profileView'};
-    const el = document.getElementById(map[v]);
-    if (el) el.style.display = 'block';
+    const target = document.getElementById(map[v]);
+    if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
     
+    // RENDER
     if (v === 'cart') renderCart();
     if (v === 'favorites') renderFavs();
     if (v === 'profile') loadProfile();
     if (v === 'products') renderProducts();
     
+    // NAV ACTIVE
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`[data-nav="${v}"]`)?.classList.add('active');
+    const navBtn = document.querySelector(`[data-nav="${v}"]`);
+    if (navBtn) navBtn.classList.add('active');
 }
+
 function filterCat(cat, btn) {
     curCat = cat;
     document.querySelectorAll('.cat').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
     loadProducts();
 }
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function openModal(id) { 
+    const el = document.getElementById(id); 
+    if (el) el.style.display = 'flex'; 
+}
+function closeModal(id) { 
+    const el = document.getElementById(id); 
+    if (el) el.style.display = 'none'; 
+}
+
 function toast(m, t = 's') {
     const el = document.createElement('div');
     el.className = 'toast toast-' + t;
     el.textContent = m;
-    document.getElementById('toasts').appendChild(el);
-    setTimeout(() => el.remove(), 3000);
+    const container = document.getElementById('toasts');
+    if (container) {
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
 }
+
 function fmt(p) { return p?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') || '0'; }
