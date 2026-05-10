@@ -54,7 +54,7 @@ body {
   color: #fff;
   font-weight: 500;
   font-size: 14px;
-  animation: inR 0.3s;
+  animation: slideIn 0.3s;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 .toast-s {
@@ -63,7 +63,7 @@ body {
 .toast-e {
   background: var(--red);
 }
-@keyframes inR {
+@keyframes slideIn {
   from {
     transform: translateX(100%);
     opacity: 0;
@@ -125,10 +125,6 @@ body {
   align-items: center;
   justify-content: center;
 }
-.icon-btn:hover {
-  background: var(--blue-l);
-  color: var(--blue);
-}
 
 /* CATS */
 .cats {
@@ -159,17 +155,26 @@ body {
   color: var(--w);
   border-color: var(--blue);
 }
-.cat i {
-  font-size: 14px;
-}
 
-/* GRID */
-.grid {
-  display: grid;
+/* GRID - ASOSIY MUAMMO SHU YERDA EDİ */
+.products-grid {
+  display: grid !important;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 16px;
+  min-height: 200px;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
+
+.view {
+  display: none;
+}
+.view.active {
+  display: block !important;
+}
+
+/* CARD */
 .card {
   background: var(--w);
   border: 1px solid var(--g200);
@@ -185,8 +190,9 @@ body {
 }
 .card img {
   width: 100%;
-  height: 200px;
+  height: 180px;
   object-fit: cover;
+  display: block;
 }
 .card .fav {
   position: absolute;
@@ -220,10 +226,12 @@ body {
   font-weight: 700;
   z-index: 2;
 }
-.card .info {
+
+/* INFO - NARX TAGIDA ESKI NARX */
+.info {
   padding: 12px;
 }
-.card .name {
+.name {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 6px;
@@ -233,25 +241,27 @@ body {
   overflow: hidden;
   min-height: 40px;
 }
-.card .price-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.price-block {
   margin-bottom: 10px;
 }
-.card .price {
+.price {
   font-size: 18px;
   font-weight: 700;
   color: var(--blue);
   white-space: nowrap;
+  display: block;
 }
-.card .old {
+.old {
   font-size: 12px;
   color: var(--g400);
   text-decoration: line-through;
   white-space: nowrap;
+  display: block;
+  margin-top: 2px;
 }
-.card .buy-btn {
+
+/* BUTTONS */
+.buy-btn {
   width: 100%;
   padding: 10px;
   background: var(--blue);
@@ -262,7 +272,7 @@ body {
   font-size: 14px;
   font-weight: 600;
 }
-.card .qty-ctrl {
+.qty-ctrl {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,7 +281,7 @@ body {
   padding: 6px;
   border-radius: var(--rs);
 }
-.card .qty-ctrl button {
+.qty-ctrl button {
   width: 32px;
   height: 32px;
   border: 1px solid var(--g200);
@@ -281,22 +291,14 @@ body {
   font-size: 16px;
   font-weight: 600;
 }
-.card .qty-ctrl span {
+.qty-ctrl span {
   font-weight: 700;
   font-size: 16px;
   min-width: 24px;
   text-align: center;
 }
-/* Grid doim ko'rinib turishi uchun */
-.products-grid { display: grid !important; min-height: 200px; }
-/* VIEWS */
-.view {
-  display: none;
-}
-.view.active,
-.view[style*="block"] {
-  display: block;
-}
+
+/* BACK BUTTON */
 .back {
   width: 40px;
   height: 40px;
@@ -365,20 +367,20 @@ body {
   line-height: 1.6;
 }
 .d-price {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin-bottom: 16px;
 }
 .d-price .price {
   font-size: 28px;
   font-weight: 700;
   color: var(--blue);
+  display: block;
 }
 .d-price .old {
   font-size: 14px;
   color: var(--g400);
   text-decoration: line-through;
+  display: block;
+  margin-top: 4px;
 }
 .d-stats {
   display: flex;
@@ -426,7 +428,7 @@ body {
   cursor: pointer;
 }
 
-/* SAVAT */
+/* CART */
 .cart-list {
   padding: 0 16px;
   display: flex;
@@ -486,6 +488,7 @@ body {
 .empty-cart {
   text-align: center;
   padding: 60px 20px;
+  display: none;
 }
 .empty-cart i {
   font-size: 64px;
@@ -673,13 +676,6 @@ body {
   color: inherit;
   border: 1px solid var(--g200);
 }
-.admin-link i:first-child {
-  font-size: 24px;
-  color: var(--blue);
-}
-.admin-link div {
-  flex: 1;
-}
 .order-card {
   background: var(--w);
   border: 1px solid var(--g200);
@@ -706,17 +702,9 @@ body {
   background: #fef3c7;
   color: #f59e0b;
 }
-.st-confirmed {
-  background: #dbeafe;
-  color: #2563eb;
-}
 .st-delivered {
   background: #d1fae5;
   color: #10b981;
-}
-.st-cancelled {
-  background: #fee2e2;
-  color: #ef4444;
 }
 
 /* MODAL */
@@ -728,7 +716,7 @@ body {
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
 }
@@ -831,7 +819,7 @@ body {
   width: 18px;
   height: 18px;
   font-size: 10px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   font-weight: 700;
