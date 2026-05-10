@@ -8,7 +8,7 @@ class Config:
     SECRET_KEY = 'zenilpro_2024'
     ADMIN_PASSWORD = 'zeniladmin2024'
     ADMIN_IDS = [6769229781]
-    BOT_TOKEN = 'YOUR_BOT_TOKEN'
+    BOT_TOKEN = '8716353787:AAGAddW33W3jbOa0CVZVxez1MqqHL-bvCf0'
     SHOP_NAME = 'ZenilPro'
     PRODUCTS_FILE = 'products.json'
     ORDERS_FILE = 'orders.json'
