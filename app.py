@@ -1,20 +1,21 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_from_directory
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 import json, os, uuid, requests
 from datetime import datetime
 
 class Config:
     SECRET_KEY = 'zenilpro_2024'
     ADMIN_PASSWORD = 'zeniladmin2024'
-    ADMIN_IDS = [6769229781]  # Sizning ID
-    BOT_TOKEN = '8716353787:AAGAddW33W3jbOa0CVZVxez1MqqHL-bvCf0'  # YANGI TOKEN OLING!
+    ADMIN_IDS = [6769229781]
+    BOT_TOKEN = '8716353787:AAGAddW33W3jbOa0CVZVxez1MqqHL-bvCf0'
     SHOP_NAME = 'ZenilPro'
-    SHOP_DESCRIPTION = 'Premium Parfyumeriya Do\'koni'
     PRODUCTS_FILE = 'products.json'
     ORDERS_FILE = 'orders.json'
     USERS_FILE = 'users.json'
     DELIVERY_FREE = 500000
     DELIVERY_COST = 30000
+    UPLOAD_FOLDER = 'static/uploads'
     
     @classmethod
     def is_admin(cls, tid):
@@ -22,7 +23,14 @@ class Config:
 
 app = Flask(__name__)
 app.secret_key = Config.SECRET_KEY
+app.config['UPLOAD_FOLDER'] = Config.UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 CORS(app)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 DEFAULT_PRODUCTS = [
     {"id":"1","name":"Chanel No. 5","description":"Legendary ayollar parfyumeriyasi. 100ml","price":1500000,"old_price":1800000,"image":"https://images.unsplash.com/photo-1541643600914-78b084683601?w=400","category":"parfum","in_stock":15,"discount":17,"sold_this_week":45},
@@ -52,225 +60,70 @@ def save_orders(o): save_json(Config.ORDERS_FILE, o)
 def load_users(): return load_json(Config.USERS_FILE, {})
 def save_users(u): save_json(Config.USERS_FILE, u)
 
-# ==================== TELEGRAM BOT FUNCTIONS ====================
 def send_telegram(chat_id, text, reply_markup=None):
-    """Telegramga xabar yuborish"""
     url = f"https://api.telegram.org/bot{Config.BOT_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': chat_id,
-        'text': text,
-        'parse_mode': 'HTML'
-    }
-    if reply_markup:
-        payload['reply_markup'] = json.dumps(reply_markup)
-    
-    try:
-        r = requests.post(url, json=payload, timeout=10)
-        return r.json()
-    except Exception as e:
-        print(f"Telegram xatolik: {e}")
-        return None
+    payload = {'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}
+    if reply_markup: payload['reply_markup'] = json.dumps(reply_markup)
+    try: return requests.post(url, json=payload, timeout=10).json()
+    except: return None
 
-def answer_callback(callback_id, text=None, url=None):
-    """Callback query ga javob berish"""
-    api_url = f"https://api.telegram.org/bot{Config.BOT_TOKEN}/answerCallbackQuery"
-    payload = {'callback_query_id': callback_id}
-    if text: payload['text'] = text
-    if url: payload['url'] = url
-    try:
-        requests.post(api_url, json=payload, timeout=5)
-    except:
-        pass
-
-def set_bot_commands():
-    """Bot komandalarini o'rnatish"""
-    url = f"https://api.telegram.org/bot{Config.BOT_TOKEN}/setMyCommands"
-    commands = {
-        "commands": [
-            {"command": "start", "description": "Botni ishga tushirish"},
-            {"command": "menu", "description": "Menyuni ochish"},
-            {"command": "help", "description": "Yordam"},
-            {"command": "admin", "description": "Admin panel"}
-        ]
-    }
-    try:
-        requests.post(url, json=commands, timeout=5)
-        print("Bot komandalari o'rnatildi!")
-    except Exception as e:
-        print(f"Komanda o'rnatishda xatolik: {e}")
-
-def get_ngrok_url():
-    """ngrok orqali localhostni internetga chiqarish"""
-    try:
-        r = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=3)
-        data = r.json()
-        for tunnel in data.get('tunnels', []):
-            if tunnel.get('proto') == 'https':
-                return tunnel.get('public_url')
-    except:
-        pass
-    return None
-
-def set_webhook(webhook_url=None):
-    """Webhook o'rnatish"""
-    if not webhook_url:
-        webhook_url = get_ngrok_url()
-        if not webhook_url:
-            print("❌ ngrok ishlamayapti! ngrok ni ishga tushiring.")
-            return False
-    
-    url = f"https://api.telegram.org/bot{Config.BOT_TOKEN}/setWebhook"
-    payload = {'url': f"{webhook_url}/webhook"}
-    
-    try:
-        r = requests.post(url, json=payload, timeout=10)
-        data = r.json()
-        if data.get('ok'):
-            print(f"✅ Webhook o'rnatildi: {webhook_url}/webhook")
-            return True
-        else:
-            print(f"❌ Webhook xatolik: {data}")
-            return False
-    except Exception as e:
-        print(f"❌ Webhook o'rnatishda xatolik: {e}")
-        return False
-
-def delete_webhook():
-    """Webhookni o'chirish (polling uchun)"""
-    url = f"https://api.telegram.org/bot{Config.BOT_TOKEN}/deleteWebhook"
-    try:
-        requests.post(url, timeout=5)
-    except:
-        pass
-
-# ==================== WEBHOOK ROUTE ====================
+# ==================== WEBHOOK ====================
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    """Telegram dan kelgan barcha xabarlarni qabul qilish"""
     try:
         data = request.json
-        print(f"📩 Webhook keldi: {json.dumps(data, indent=2)[:500]}")
-        
-        # Message
         if 'message' in data:
-            message = data['message']
-            chat_id = message['chat']['id']
-            text = message.get('text', '')
-            user = message.get('from', {})
+            msg = data['message']
+            chat_id = msg['chat']['id']
+            text = msg.get('text', '')
+            user = msg.get('from', {})
             first_name = user.get('first_name', 'Foydalanuvchi')
             
-            # /start komandasi
             if text == '/start':
-                # Web App URL
                 webapp_url = request.host_url.rstrip('/')
-                
                 welcome = f"""🎉 <b>Assalomu alaykum, {first_name}!</b>
 
-🔥 <b>{Config.SHOP_NAME}</b> - {Config.SHOP_DESCRIPTION}
+🔥 <b>{Config.SHOP_NAME}</b> - Premium Parfyumeriya Do'koni
 
-🛍 Bu yerda siz:
-• 💎 Original parfyumeriya
-• 🎨 Kosmetika
-• 🍽️ Idish-tovoq
-• 👕 Kiyim-kechak
-• 🧴 Kir yuvish kukunlari
-
-topishingiz mumkin!
-
-<i>Do'konga kirish uchun pastdagi tugmani bosing:</i>"""
-
-                # Inline keyboard - Do'konga kirish tugmasi
-                reply_markup = {
-                    'inline_keyboard': [
-                        [{
-                            'text': '🛍 Do\'konga kirish',
-                            'web_app': {'url': webapp_url}
-                        }],
-                        [
-                            {'text': '📞 Aloqa', 'callback_data': 'contact'},
-                            {'text': 'ℹ️ Yordam', 'callback_data': 'help'}
-                        ]
-                    ]
-                }
+🛍 Pastdagi tugmani bosib do'konga kiring!"""
                 
+                reply_markup = {
+                    'inline_keyboard': [[{
+                        'text': '🛍 Do\'konga kirish',
+                        'web_app': {'url': webapp_url}
+                    }], [{
+                        'text': 'ℹ️ Yordam', 'callback_data': 'help'
+                    }]]
+                }
                 send_telegram(chat_id, welcome, reply_markup)
                 
-                # Menu keyboard ham yuboramiz
                 menu_markup = {
                     'keyboard': [
                         [{'text': '🛍 Katalog'}, {'text': '🛒 Savat'}],
                         [{'text': '❤️ Sevimlilar'}, {'text': '👤 Profil'}]
                     ],
-                    'resize_keyboard': True,
-                    'one_time_keyboard': False
+                    'resize_keyboard': True
                 }
                 send_telegram(chat_id, "Tez menyu:", menu_markup)
             
-            # /menu komandasi
             elif text == '/menu' or text == '🛍 Katalog':
                 webapp_url = request.host_url.rstrip('/')
-                reply_markup = {
-                    'inline_keyboard': [[{
-                        'text': '🛍 Do\'konga kirish',
-                        'web_app': {'url': webapp_url}
-                    }]]
-                }
-                send_telegram(chat_id, "Do'konga kirish uchun bosing:", reply_markup)
+                reply_markup = {'inline_keyboard': [[{'text': '🛍 Do\'konga kirish', 'web_app': {'url': webapp_url}}]]}
+                send_telegram(chat_id, "Do'konga kirish:", reply_markup)
             
-            # /help komandasi
-            elif text == '/help' or text == 'ℹ️ Yordam':
-                help_text = f"""📚 <b>Yordam</b>
-
-<b>Mavjud komandalar:</b>
-/start - Botni ishga tushirish
-/menu - Katalogga kirish
-/help - Yordam
-
-<b>Savollaringiz bo'lsa:</b>
-@admin ga yozing"""
-                send_telegram(chat_id, help_text)
+            elif text == '/help':
+                send_telegram(chat_id, "📚 Yordam: /start - Botni ishga tushirish, /menu - Katalog")
             
-            # /admin komandasi
             elif text == '/admin':
-                user_id = user.get('id')
-                if Config.is_admin(user_id):
-                    webapp_url = request.host_url.rstrip('/')
-                    send_telegram(chat_id, f"🔐 <b>Admin Panel</b>\n\nURL: {webapp_url}/admin\nParol: {Config.ADMIN_PASSWORD}")
+                if Config.is_admin(user.get('id')):
+                    send_telegram(chat_id, f"🔐 Admin: {request.host_url.rstrip('/')}/admin\nParol: {Config.ADMIN_PASSWORD}")
                 else:
                     send_telegram(chat_id, "❌ Siz admin emassiz!")
-            
-            # Savat tugmasi
-            elif text == '🛒 Savat':
-                send_telegram(chat_id, "Savatni Web App orqali ko'rishingiz mumkin. /menu bosing.")
-            
-            # Sevimlilar tugmasi
-            elif text == '❤️ Sevimlilar':
-                send_telegram(chat_id, "Sevimlilarni Web App orqali ko'rishingiz mumkin. /menu bosing.")
-            
-            # Profil tugmasi
-            elif text == '👤 Profil':
-                send_telegram(chat_id, "Profilingizni Web App da ko'rishingiz mumkin. /menu bosing.")
-        
-        # Callback Query (tugma bosilganda)
-        elif 'callback_query' in data:
-            callback = data['callback_query']
-            callback_id = callback['id']
-            callback_data = callback.get('data', '')
-            chat_id = callback['message']['chat']['id']
-            
-            if callback_data == 'contact':
-                answer_callback(callback_id, "Admin bilan bog'lanish uchun @admin ga yozing")
-                send_telegram(chat_id, "📞 <b>Aloqa:</b>\n@admin ga yozing yoki /help bosing.")
-            
-            elif callback_data == 'help':
-                answer_callback(callback_id, "Yordam ko'rsatilmoqda...")
-                send_telegram(chat_id, "📚 Yordam uchun /help bosing.")
         
         return jsonify({'ok': True})
-    
     except Exception as e:
-        print(f"Webhook xatolik: {e}")
-        return jsonify({'ok': False, 'error': str(e)})
+        print(f"Webhook error: {e}")
+        return jsonify({'ok': False})
 
 # ==================== WEB ROUTES ====================
 @app.route('/')
@@ -278,6 +131,10 @@ def index(): return render_template('index.html')
 
 @app.route('/admin')
 def admin(): return render_template('admin.html')
+
+@app.route('/static/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(Config.UPLOAD_FOLDER, filename)
 
 @app.route('/api/check-admin')
 def check_admin():
@@ -317,12 +174,8 @@ def handle_orders():
                 prod['sold_this_week'] = prod.get('sold_this_week',0) + item.get('quantity',1)
         save_products(p)
         orders = load_orders(); orders.append(order); save_orders(orders)
-        
-        # Adminlarga xabar yuborish
-        for admin_id in Config.ADMIN_IDS:
-            msg = f"🛍 <b>Yangi buyurtma!</b>\n━━━━━━━━━━━━━\n📦 ID: #{order['order_id']}\n👤 Mijoz: {order['customer_name']}\n📱 Tel: {order['phone']}\n💰 Jami: {order['total']:,} so'm"
-            send_telegram(admin_id, msg)
-        
+        for aid in Config.ADMIN_IDS:
+            send_telegram(aid, f"🛍 Yangi buyurtma #{order['order_id']}\n👤 {order['customer_name']}\n📱 {order['phone']}\n💰 {order['total']:,} so'm")
         return jsonify({'success': True, 'order': order})
     else:
         uid = request.args.get('user_id', type=int)
@@ -349,9 +202,27 @@ def admin_login():
         session['admin'] = True; return jsonify({'success': True})
     return jsonify({'success': False})
 
+@app.route('/api/admin/check', methods=['GET'])
+def admin_check():
+    return jsonify({'is_admin': session.get('admin', False)})
+
 @app.route('/api/admin/logout', methods=['POST'])
 def admin_logout():
     session.clear(); return jsonify({'success': True})
+
+@app.route('/api/admin/upload', methods=['POST'])
+def admin_upload():
+    if not session.get('admin'): return jsonify({'success': False}), 401
+    if 'file' not in request.files: return jsonify({'success': False, 'message': 'Fayl yo\'q'})
+    file = request.files['file']
+    if file.filename == '': return jsonify({'success': False})
+    if file and allowed_file(file.filename):
+        filename = str(uuid.uuid4())[:8] + '_' + secure_filename(file.filename)
+        os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+        file.save(os.path.join(Config.UPLOAD_FOLDER, filename))
+        url = f"/static/uploads/{filename}"
+        return jsonify({'success': True, 'url': url})
+    return jsonify({'success': False, 'message': 'Noto\'g\'ri format'})
 
 @app.route('/api/admin/products', methods=['POST', 'DELETE'])
 def admin_products():
@@ -369,29 +240,7 @@ if __name__ == '__main__':
     os.makedirs('templates', exist_ok=True)
     os.makedirs('static/css', exist_ok=True)
     os.makedirs('static/js', exist_ok=True)
-    
-    print("=" * 50)
-    print(f"  🚀 {Config.SHOP_NAME} - Web App")
-    print("=" * 50)
-    print(f"  🌐 Web: http://localhost:5000")
-    print(f"  🔐 Admin: http://localhost:5000/admin")
-    print(f"  📱 Webhook: /webhook")
-    print("=" * 50)
-    
-    # Bot komandalarini o'rnatish
-    set_bot_commands()
-    
-    # Agar ngrok ishlasa, avtomatik webhook o'rnatish
-    ngrok_url = get_ngrok_url()
-    if ngrok_url:
-        print(f"  🔗 Ngrok: {ngrok_url}")
-        set_webhook(ngrok_url)
-    else:
-        print("  ⚠️  ngrok topilmadi!")
-        print("  Webhook uchun ngrok ni ishga tushiring:")
-        print("  ngrok http 5000")
-        print("  Keyin: /set_webhook sahifasiga kiring")
-    
-    print("=" * 50)
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"ZenilPro running on port {port}")
+    app.run(debug=False, host='0.0.0.0', port=port)
