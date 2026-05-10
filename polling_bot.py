@@ -5,7 +5,7 @@ from datetime import datetime
 
 # SIZNING MA'LUMOTLARINGIZ
 BOT_TOKEN = '8716353787:AAGAddW33W3jbOa0CVZVxez1MqqHL-bvCf0'  # YANGI TOKEN OLING!
-WEBAPP_URL = 'https://sizning-server.com'  # Keyinchalik serverga qo'yganingizda
+WEBAPP_URL = 'https://zenilpro-backend.onrender.com'  # Keyinchalik serverga qo'yganingizda
 
 # Admin ID
 ADMIN_IDS = [6769229781]
