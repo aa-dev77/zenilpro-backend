@@ -7,7 +7,16 @@ let selProd = null;
 let dq = 1;
 let userData = null;
 let isAdmin = false;
-
+// Loader - 3 sekund
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        var loader = document.getElementById('pageLoader');
+        if(loader) {
+            loader.style.opacity = '0';
+            setTimeout(function(){ loader.style.display = 'none'; }, 300);
+        }
+    }, 3000);
+});
 document.addEventListener("DOMContentLoaded", () => {
   if (window.Telegram?.WebApp) {
     const tg = window.Telegram.WebApp;
