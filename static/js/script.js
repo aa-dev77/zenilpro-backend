@@ -1,15 +1,15 @@
-let products = [];
-let cart = JSON.parse(localStorage.getItem('zc') || '[]');
-let favs = JSON.parse(localStorage.getItem('zf') || '[]');
-let curView = 'products';
-let curCat = 'all';
-let selProd = null;
-let dq = 1;
-let userData = null;
-let isAdmin = false;
+var products = [];
+var cart = JSON.parse(localStorage.getItem('zc') || '[]');
+var favs = JSON.parse(localStorage.getItem('zf') || '[]');
+var curView = 'products';
+var curCat = 'all';
+var selProd = null;
+var dq = 1;
+var userData = null;
+var isAdmin = false;
+var prevView = 'products';
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('productsView').style.display = 'block';
     setTimeout(function() {
         var loader = document.getElementById('pageLoader');
         if (loader) { loader.style.opacity = '0'; setTimeout(function() { if (loader) loader.style.display = 'none'; }, 300); }
@@ -17,19 +17,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (window.Telegram && window.Telegram.WebApp) {
         var tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        tg.ready(); tg.expand();
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userData = tg.initDataUnsafe.user;
             checkAdmin(userData.id);
-            fetch('/api/user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userData.id, username: userData.username || '', first_name: userData.first_name || '', phone: userData.phone_number || '' })
-            });
         }
     }
-
     loadProducts();
     updateBadge();
 });
@@ -57,13 +50,10 @@ function getQty(id) { var i = cart.find(function(x) { return x.id === id; }); re
 function renderProducts() {
     var grid = document.getElementById('productsGrid');
     if (!grid) return;
-        document.getElementById('productsView').style.display = 'block';
-    grid.style.display = 'grid';
     if (products.length === 0) {
         grid.innerHTML = '<div style="text-align:center;padding:40px;grid-column:1/-1;color:#6B7280;">Mahsulotlar topilmadi</div>';
         return;
     }
-
     var html = '';
     for (var i = 0; i < products.length; i++) {
         var p = products[i];
@@ -102,12 +92,13 @@ function openDetail(id) {
     disc.textContent = selProd.discount > 0 ? '-' + selProd.discount + '%' : '';
     disc.style.display = selProd.discount > 0 ? 'inline-block' : 'none';
     updateDTotal();
+    prevView = curView;
     showView('detail');
 }
 
 function dQty(c) { dq = Math.max(1, Math.min(selProd.in_stock, dq + c)); document.getElementById('dQty').textContent = dq; updateDTotal(); }
 function updateDTotal() { document.getElementById('dTotal').textContent = fmt(selProd.price * dq) + ' so\'m'; }
-function addFromDetail() { addCart(selProd.id, dq); toast('Savatga qo\'shildi'); showView('products'); }
+function addFromDetail() { addCart(selProd.id, dq); toast('Savatga qo\'shildi'); goBack(); }
 
 function addCart(id, q) {
     q = q || 1;
@@ -116,35 +107,26 @@ function addCart(id, q) {
     else { var p = products.find(function(i) { return i.id === id; }); if (p) cart.push({...p, quantity: q}); }
     saveCart(); updateBadge(); renderProducts();
 }
-
 function chgCart(id, c) {
     var it = cart.find(function(i) { return i.id === id; });
     if (it) { it.quantity += c; if (it.quantity <= 0) cart = cart.filter(function(i) { return i.id !== id; }); }
     saveCart(); updateBadge(); renderProducts(); if (curView === 'cart') renderCart();
 }
-
 function rmCart(id) { cart = cart.filter(function(i) { return i.id !== id; }); saveCart(); updateBadge(); renderProducts(); if (curView === 'cart') renderCart(); }
 function clearCart() { if (confirm('Savat tozalansinmi?')) { cart = []; saveCart(); updateBadge(); renderProducts(); renderCart(); } }
 function saveCart() { localStorage.setItem('zc', JSON.stringify(cart)); }
-
 function updateBadge() {
     var c = cart.reduce(function(s, i) { return s + i.quantity; }, 0);
     var b = document.getElementById('cartBadge');
-    if (!b) return;
-    b.textContent = c;
-    b.style.display = c > 0 ? 'flex' : 'none';
+    if (!b) return; b.textContent = c; b.style.display = c > 0 ? 'flex' : 'none';
 }
 
 function renderCart() {
-    var l = document.getElementById('cartList');
-    var e = document.getElementById('emptyCart');
-    var b = document.getElementById('cartBottom');
+    var l = document.getElementById('cartList'), e = document.getElementById('emptyCart'), b = document.getElementById('cartBottom');
     if (!l || !e || !b) return;
     if (cart.length === 0) { l.innerHTML = ''; e.style.display = 'block'; b.style.display = 'none'; return; }
     e.style.display = 'none'; b.style.display = 'block';
-    l.innerHTML = cart.map(function(i) {
-        return '<div class="cart-item"><img src="' + i.image + '" onerror="this.src=\'https://placehold.co/70\'"><div class="cart-info"><div class="cart-name">' + i.name + '</div><div class="cart-price">' + fmt(i.price) + ' so\'m</div></div><div class="cart-qty"><button onclick="chgCart(\'' + i.id + '\',-1)">-</button><span>' + i.quantity + '</span><button onclick="chgCart(\'' + i.id + '\',1)">+</button></div><i class="fa-solid fa-xmark rm-btn" onclick="rmCart(\'' + i.id + '\')"></i></div>';
-    }).join('');
+    l.innerHTML = cart.map(function(i) { return '<div class="cart-item"><img src="' + i.image + '" onerror="this.src=\'https://placehold.co/70\'"><div class="cart-info"><div class="cart-name">' + i.name + '</div><div class="cart-price">' + fmt(i.price) + ' so\'m</div></div><div class="cart-qty"><button onclick="chgCart(\'' + i.id + '\',-1)">-</button><span>' + i.quantity + '</span><button onclick="chgCart(\'' + i.id + '\',1)">+</button></div><i class="fa-solid fa-xmark rm-btn" onclick="rmCart(\'' + i.id + '\')"></i></div>'; }).join('');
     document.getElementById('cartTotal').textContent = fmt(cart.reduce(function(s, i) { return s + i.price * i.quantity; }, 0)) + ' so\'m';
 }
 
@@ -152,37 +134,27 @@ function openCheckout() {
     if (userData) { document.getElementById('cName').value = userData.first_name || ''; document.getElementById('cPhone').value = userData.phone_number || ''; }
     document.getElementById('checkoutItems').innerHTML = cart.map(function(i) { return '<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>' + i.name + ' x' + i.quantity + '</span><span>' + fmt(i.price * i.quantity) + ' so\'m</span></div>'; }).join('');
     document.getElementById('checkoutTotal').textContent = fmt(cart.reduce(function(s, i) { return s + i.price * i.quantity; }, 0)) + ' so\'m';
-    showView('checkout');
+    prevView = 'cart'; showView('checkout');
 }
 
 async function submitOrder(e) {
     e.preventDefault();
-    var n = document.getElementById('cName').value.trim();
-    var p = document.getElementById('cPhone').value.trim();
-    var a = document.getElementById('cAddr').textContent.trim();
-    var pay = document.querySelector('input[name="pay"]:checked');
+    var n = document.getElementById('cName').value.trim(), p = document.getElementById('cPhone').value.trim();
+    var a = document.getElementById('cAddr').textContent.trim(), pay = document.querySelector('input[name="pay"]:checked');
     pay = pay ? pay.value : 'cash';
     if (!n || !p) { toast('Ism va telefon majburiy!', 'e'); return; }
     if (cart.length === 0) { toast('Savat bo\'sh!', 'e'); return; }
     var sub = cart.reduce(function(s, i) { return s + i.price * i.quantity; }, 0);
     try {
-        var r = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userData ? userData.id : null, name: n, phone: p, address: a, payment_method: pay, items: cart.map(function(i) { return { id: i.id, name: i.name, quantity: i.quantity, price: i.price }; }), subtotal: sub })
-        });
+        var r = await fetch('/api/orders', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ user_id:userData?userData.id:null, name:n, phone:p, address:a, payment_method:pay, items:cart.map(function(i){return {id:i.id,name:i.name,quantity:i.quantity,price:i.price};}), subtotal:sub }) });
         var d = await r.json();
         if (d.success) {
             cart = []; saveCart(); updateBadge(); renderProducts();
-            if (pay === 'click' && d.order.click_url) {
-                window.open(d.order.click_url, '_blank');
-                toast('To\'lov sahifasi ochildi. To\'lov qiling! #' + d.order.order_id);
-            } else if (pay === 'payme' && d.order.payme_url) {
-                window.open(d.order.payme_url, '_blank');
-                toast('To\'lov sahifasi ochildi. To\'lov qiling! #' + d.order.order_id);
-            } else {
-                toast('Buyurtma #' + d.order.order_id + ' qabul qilindi!');
-            }
+            if ((pay === 'click' || pay === 'payme') && (d.order.click_url || d.order.payme_url)) {
+                var url = d.order.click_url || d.order.payme_url;
+                window.open(url, '_blank');
+                toast('To\'lov sahifasi ochildi! #' + d.order.order_id);
+            } else { toast('Buyurtma #' + d.order.order_id + ' qabul qilindi!'); }
             showView('products');
         }
     } catch (er) { toast('Xatolik', 'e'); }
@@ -198,9 +170,8 @@ function getGPS() {
             document.getElementById('addressInput').value = d.display_name || '';
         } catch (er) { document.getElementById('cAddr').textContent = pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4); }
         closeModal('addressModal');
-    }, function() { toast('GPS aniqlanmadi', 'e'); }, { enableHighAccuracy: true, timeout: 10000 });
+    }, function() { toast('GPS aniqlanmadi', 'e'); }, { enableHighAccuracy:true, timeout:10000 });
 }
-
 function saveAddr() { var a = document.getElementById('addressInput').value.trim(); if (a) document.getElementById('cAddr').textContent = a; closeModal('addressModal'); }
 
 function toggleFav(id) {
@@ -209,11 +180,9 @@ function toggleFav(id) {
     localStorage.setItem('zf', JSON.stringify(favs));
     renderProducts(); if (curView === 'favorites') renderFavs();
 }
-
 function renderFavs() {
     var fp = products.filter(function(p) { return favs.includes(p.id); });
-    var g = document.getElementById('favGrid');
-    var e = document.getElementById('emptyFav');
+    var g = document.getElementById('favGrid'), e = document.getElementById('emptyFav');
     if (!g || !e) return;
     if (fp.length === 0) { g.innerHTML = ''; e.style.display = 'block'; return; }
     e.style.display = 'none';
@@ -231,7 +200,6 @@ function loadProfile() {
     if (as) as.style.display = isAdmin ? 'block' : 'none';
     loadOrders();
 }
-
 async function loadOrders() {
     var c = document.getElementById('profileOrders');
     if (!c) return;
@@ -240,18 +208,14 @@ async function loadOrders() {
         var r = await fetch('/api/orders?user_id=' + userData.id);
         var d = await r.json();
         if (d.success && d.orders.length > 0) {
-            c.innerHTML = d.orders.map(function(o) {
-                return '<div class="order-card"><div class="order-header"><span class="order-id">#' + o.order_id + '</span><span class="order-status st-' + o.status + '">' + (o.status_text || o.status) + '</span></div><div style="font-size:13px;color:#6B7280;margin-bottom:8px;">' + (o.items ? o.items.map(function(i) { return i.name + ' x' + i.quantity; }).join(', ') : '') + '</div><div style="display:flex;justify-content:space-between;"><span style="font-size:12px;color:#9CA3AF;">' + new Date(o.created_at).toLocaleDateString() + '</span><strong style="color:#2563EB;">' + fmt(o.total) + ' so\'m</strong></div></div>';
-            }).join('');
+            c.innerHTML = d.orders.map(function(o) { return '<div class="order-card"><div class="order-header"><span class="order-id">#' + o.order_id + '</span><span class="order-status st-' + o.status + '">' + (o.status_text || o.status) + '</span></div><div style="font-size:13px;color:#6B7280;margin-bottom:8px;">' + (o.items?o.items.map(function(i){return i.name+' x'+i.quantity;}).join(', '):'') + '</div><div style="display:flex;justify-content:space-between;"><span style="font-size:12px;color:#9CA3AF;">' + new Date(o.created_at).toLocaleDateString() + '</span><strong style="color:#2563EB;">' + fmt(o.total) + ' so\'m</strong></div></div>'; }).join('');
         } else { c.innerHTML = '<p style="color:#9CA3AF;text-align:center;padding:20px;">Buyurtmalar yo\'q</p>'; }
     } catch (er) { c.innerHTML = '<p style="color:#EF4444;text-align:center;padding:20px;">Xatolik</p>'; }
 }
-
 async function saveProfile() {
-    var u = document.getElementById('editUser').value.trim();
-    var p = document.getElementById('editPhone').value.trim();
+    var u = document.getElementById('editUser').value.trim(), p = document.getElementById('editPhone').value.trim();
     if (userData && userData.id) {
-        await fetch('/api/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userData.id, username: u, phone: p }) });
+        await fetch('/api/user', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ user_id:userData.id, username:u, phone:p }) });
         document.getElementById('pName').textContent = u || userData.first_name;
         document.getElementById('pPhone').textContent = p || 'Noma\'lum';
         toast('Saqlandi');
@@ -260,60 +224,33 @@ async function saveProfile() {
 }
 
 function showView(v) {
-    document.getElementById('productsView').style.display = 'none';
-    document.getElementById('detailView').style.display = 'none';
-    document.getElementById('cartView').style.display = 'none';
-    document.getElementById('checkoutView').style.display = 'none';
-    document.getElementById('favoritesView').style.display = 'none';
-    document.getElementById('profileView').style.display = 'none';
-    curView = v;
-    
-    // HAMMA VIEWLARNI YASHIRISH
-    var allViews = ['productsView', 'detailView', 'cartView', 'checkoutView', 'favoritesView', 'profileView'];
-    for (var i = 0; i < allViews.length; i++) {
-        var el = document.getElementById(allViews[i]);
-        if (el) {
-            el.style.display = 'none';
-            el.classList.remove('active');
-        }
+    var pages = ['page-products', 'page-detail', 'page-cart', 'page-checkout', 'page-favorites', 'page-profile'];
+    for (var i = 0; i < pages.length; i++) {
+        var el = document.getElementById(pages[i]);
+        if (el) el.classList.remove('active');
     }
     
-    // HEADER VA NAV
     var header = document.getElementById('header');
     var nav = document.querySelector('.bottom-nav');
     if (header) header.style.display = (v === 'products') ? 'block' : 'none';
     if (nav) nav.style.display = (v === 'checkout') ? 'none' : 'flex';
     
-    // KO'RSATISH
-    var map = {
-        products: 'productsView',
-        detail: 'detailView',
-        cart: 'cartView',
-        checkout: 'checkoutView',
-        favorites: 'favoritesView',
-        profile: 'profileView'
-    };
-    
+    var map = { products:'page-products', detail:'page-detail', cart:'page-cart', checkout:'page-checkout', favorites:'page-favorites', profile:'page-profile' };
     var target = document.getElementById(map[v]);
-    if (target) {
-        target.style.display = 'block';
-        target.classList.add('active');
-    }
+    if (target) target.classList.add('active');
+    curView = v;
     
-    // RENDER
     if (v === 'cart') renderCart();
     if (v === 'favorites') renderFavs();
     if (v === 'profile') loadProfile();
     if (v === 'products') renderProducts();
     
-    // NAV ACTIVE
-    var navBtns = document.querySelectorAll('.nav-btn');
-    for (var j = 0; j < navBtns.length; j++) {
-        navBtns[j].classList.remove('active');
-    }
+    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
     var navBtn = document.querySelector('[data-nav="' + v + '"]');
     if (navBtn) navBtn.classList.add('active');
 }
+
+function goBack() { showView(prevView); }
 
 function filterCat(cat, btn) {
     curCat = cat;
@@ -327,11 +264,8 @@ function closeModal(id) { var el = document.getElementById(id); if (el) el.style
 
 function toast(m, t) {
     t = t || 's';
-    var el = document.createElement('div');
-    el.className = 'toast toast-' + t;
-    el.textContent = m;
+    var el = document.createElement('div'); el.className = 'toast toast-' + t; el.textContent = m;
     var container = document.getElementById('toasts');
     if (container) { container.appendChild(el); setTimeout(function() { el.remove(); }, 3000); }
 }
-
 function fmt(p) { return p ? p.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : '0'; }
