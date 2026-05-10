@@ -260,19 +260,50 @@ async function saveProfile() {
 
 function showView(v) {
     curView = v;
-    ['productsView', 'detailView', 'cartView', 'checkoutView', 'favoritesView', 'profileView'].forEach(function(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    
+    // HAMMA VIEWLARNI YASHIRISH
+    var allViews = ['productsView', 'detailView', 'cartView', 'checkoutView', 'favoritesView', 'profileView'];
+    for (var i = 0; i < allViews.length; i++) {
+        var el = document.getElementById(allViews[i]);
+        if (el) {
+            el.style.display = 'none';
+            el.classList.remove('active');
+        }
+    }
+    
+    // HEADER VA NAV
     var header = document.getElementById('header');
     var nav = document.querySelector('.bottom-nav');
     if (header) header.style.display = (v === 'products') ? 'block' : 'none';
     if (nav) nav.style.display = (v === 'checkout') ? 'none' : 'flex';
-    var map = { products: 'productsView', detail: 'detailView', cart: 'cartView', checkout: 'checkoutView', favorites: 'favoritesView', profile: 'profileView' };
+    
+    // KO'RSATISH
+    var map = {
+        products: 'productsView',
+        detail: 'detailView',
+        cart: 'cartView',
+        checkout: 'checkoutView',
+        favorites: 'favoritesView',
+        profile: 'profileView'
+    };
+    
     var target = document.getElementById(map[v]);
-    if (target) target.style.display = 'block';
+    if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
+    
+    // RENDER
     if (v === 'cart') renderCart();
     if (v === 'favorites') renderFavs();
     if (v === 'profile') loadProfile();
     if (v === 'products') renderProducts();
-    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+    
+    // NAV ACTIVE
+    var navBtns = document.querySelectorAll('.nav-btn');
+    for (var j = 0; j < navBtns.length; j++) {
+        navBtns[j].classList.remove('active');
+    }
     var navBtn = document.querySelector('[data-nav="' + v + '"]');
     if (navBtn) navBtn.classList.add('active');
 }
