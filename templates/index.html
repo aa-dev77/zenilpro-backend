@@ -81,7 +81,11 @@
                     <div class="field"><label>Ismingiz</label><input type="text" id="cName" required></div>
                     <div class="field"><label>Telefon</label><input type="tel" id="cPhone" required></div>
                     <div class="field"><label>Manzil</label><div class="addr-field" onclick="openModal('addressModal')"><span id="cAddr">Manzilni tanlang</span><i class="fa-solid fa-chevron-right"></i></div></div>
-                    <div class="field"><label>To'lov</label><div class="pay-options"><label class="pay-opt"><input type="radio" name="pay" value="cash" checked><span>Naqd</span></label><label class="pay-opt"><input type="radio" name="pay" value="click"><span>Click</span></label><label class="pay-opt"><input type="radio" name="pay" value="payme"><span>Payme</span></label></div></div>
+<div class="field"><label>To'lov</label>
+    <div class="pay-options">
+        <label class="pay-opt"><input type="radio" name="pay" value="cash" checked><span>Naqd pul</span></label>
+    </div>
+</div>
                     <div class="summary"><h4>Buyurtma:</h4><div id="checkoutItems"></div><div class="total-line"><span>Jami:</span><strong id="checkoutTotal">0 so'm</strong></div></div>
                     <button type="submit" class="submit-btn"><i class="fa-solid fa-check"></i> Tasdiqlash</button>
                 </form>
