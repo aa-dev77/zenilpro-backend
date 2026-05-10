@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ config.SHOP_NAME }} - Admin Panel</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../static/css/admin.css" />
+  </head>
+  <body>
+    <div class="admin-container">
+      <!-- Login -->
+      <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+          <div class="login-header">
+            <i class="fa-solid fa-spray-can-sparkles"></i>
+            <h1>{{ config.SHOP_NAME }}</h1>
+            <p>Admin Panel</p>
+          </div>
+          <form onsubmit="adminLogin(event)">
+            <div class="input-group">
+              <label><i class="fa-solid fa-lock"></i> Admin Parol</label>
+              <input
+                type="password"
+                id="adminPassword"
+                placeholder="Parolni kiriting"
+                required
+              />
+            </div>
+            <button type="submit" class="login-btn">
+              <i class="fa-solid fa-right-to-bracket"></i> Kirish
+            </button>
+          </form>
+          <button onclick="window.location.href = '/'" class="back-shop-btn">
+            <i class="fa-solid fa-arrow-left"></i> Do'konga qaytish
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div id="dashboard" class="dashboard" style="display: none">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <i class="fa-solid fa-spray-can-sparkles"></i>
+            <h2>{{ config.SHOP_NAME }}</h2>
+          </div>
+          <nav class="sidebar-nav">
+            <button
+              onclick="showTab('products')"
+              class="sidebar-btn active"
+              data-tab="products"
+            >
+              <i class="fa-solid fa-box"></i><span>Mahsulotlar</span>
+            </button>
+            <button
+              onclick="showTab('addProduct')"
+              class="sidebar-btn"
+              data-tab="addProduct"
+            >
+              <i class="fa-solid fa-plus-circle"></i><span>Qo'shish</span>
+            </button>
+            <button
+              onclick="showTab('orders')"
+              class="sidebar-btn"
+              data-tab="orders"
+            >
+              <i class="fa-solid fa-receipt"></i><span>Buyurtmalar</span>
+            </button>
+          </nav>
+          <div class="sidebar-footer">
+            <button onclick="adminLogout()" class="logout-btn">
+              <i class="fa-solid fa-right-from-bracket"></i><span>Chiqish</span>
+            </button>
+          </div>
+        </aside>
+        <main class="dashboard-main">
+          <div id="tabContent"></div>
+        </main>
+      </div>
+    </div>
+    <script src="../static/js/admin.js"></script>
+  </body>
+</html>
