@@ -13,8 +13,8 @@ class Config:
     PRODUCTS_FILE = 'products.json'
     ORDERS_FILE = 'orders.json'
     USERS_FILE = 'users.json'
-    DELIVERY_FREE = 500000
-    DELIVERY_COST = 30000
+    DELIVERY_FREE = 0
+    DELIVERY_COST = 0
     UPLOAD_FOLDER = 'static/uploads'
     
     # CLICK sozlamalari
