@@ -148,10 +148,10 @@
     
     <div class="main-layout">
         <div class="sidebar" id="sidebar">
-            <button class="active" onclick="showTab('products')"><i class="fa-solid fa-box"></i> Mahsulotlar</button>
-            <button onclick="showTab('add')"><i class="fa-solid fa-plus-circle"></i> Qo'shish</button>
-            <button onclick="showTab('orders')"><i class="fa-solid fa-receipt"></i> Buyurtmalar</button>
-            <button onclick="showTab('categories')"><i class="fa-solid fa-tags"></i> Kategoriyalar</button>
+<button class="active" onclick="showTab('products', this)">...</button>
+<button onclick="showTab('add', this)">...</button>
+<button onclick="showTab('orders', this)">...</button>
+<button onclick="showTab('categories', this)">...</button>
         </div>
         <div class="content" id="tabContent"></div>
     </div>
@@ -174,10 +174,18 @@ function showDash(){document.getElementById('loginPage').style.display='none';do
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
 
-function showTab(t){
+function showTab(t, btn){
     closeSidebar();
     document.querySelectorAll('.sidebar button').forEach(function(b){b.classList.remove('active');});
-    event.target.classList.add('active');
+    if (btn) btn.classList.add('active');
+    else {
+        var buttons = document.querySelectorAll('.sidebar button');
+        for (var i = 0; i < buttons.length; i++) {
+            if (buttons[i].textContent.includes(t === 'products' ? 'Mahsulotlar' : t === 'add' ? 'Qo\'shish' : t === 'orders' ? 'Buyurtmalar' : 'Kategoriyalar')) {
+                buttons[i].classList.add('active');
+            }
+        }
+    }
     loadTab(t);
 }
 function loadTab(t){
