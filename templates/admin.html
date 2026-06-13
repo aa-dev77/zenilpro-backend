@@ -127,7 +127,7 @@
                 <input type="hidden" id="editId">
                 <div class="form-grid">
                     <div class="form-group"><label>Nomi</label><input id="editName" required></div>
-                    <div class="form-group"><label>Kategoriya</label><select id="editCat"><option value="parfum">Parfyumeriya</option><option value="cosmetics">Kosmetika</option><option value="dishes">Idish-tovoq</option><option value="clothes">Kiyim</option><option value="powders">Kukunlar</option></select></div>
+                    <div class="form-group"><label>Kategoriya</label><select id="editCat"></select></div>
                     <div class="form-group"><label>Narx</label><input type="number" id="editPrice" required></div>
                     <div class="form-group"><label>Eski narx</label><input type="number" id="editOldPrice"></div>
                     <div class="form-group"><label>Soni</label><input type="number" id="editStock"></div>
@@ -148,10 +148,10 @@
     
     <div class="main-layout">
         <div class="sidebar" id="sidebar">
-<button class="active" onclick="showTab('products', this)">Mahsulotlar</button>
-<button onclick="showTab('add', this)">Yangi Mahsulot Qo'shish</button>
-<button onclick="showTab('orders', this)">Buyurtmalar</button>
-<button onclick="showTab('categories', this)">Kataloglar</button>
+            <button class="active" onclick="showTab('products', this)">Mahsulotlar</button>
+            <button onclick="showTab('add', this)">Yangi Mahsulot Qo'shish</button>
+            <button onclick="showTab('orders', this)">Buyurtmalar</button>
+            <button onclick="showTab('categories', this)">Kataloglar</button>
         </div>
         <div class="content" id="tabContent"></div>
     </div>
@@ -181,7 +181,7 @@ function showTab(t, btn){
     else {
         var buttons = document.querySelectorAll('.sidebar button');
         for (var i = 0; i < buttons.length; i++) {
-            if (buttons[i].textContent.includes(t === 'products' ? 'Mahsulotlar' : t === 'add' ? 'Qo\'shish' : t === 'orders' ? 'Buyurtmalar' : 'Kategoriyalar')) {
+            if (buttons[i].textContent.includes(t === 'products' ? 'Mahsulotlar' : t === 'add' ? 'Qo\'shish' : t === 'orders' ? 'Buyurtmalar' : 'Kataloglar')) {
                 buttons[i].classList.add('active');
             }
         }
@@ -195,32 +195,73 @@ function loadTab(t){
     else if(t==='categories') loadCategories();
 }
 
+function updateCategorySelects() {
+    var selects = document.querySelectorAll('#editCat, #acat');
+    for (var i = 0; i < selects.length; i++) {
+        var select = selects[i];
+        if (select) {
+            var currentVal = select.value;
+            select.innerHTML = '';
+            for (var j = 0; j < allCategories.length; j++) {
+                var c = allCategories[j];
+                var option = document.createElement('option');
+                option.value = c;
+                option.textContent = catNames[c] || c;
+                select.appendChild(option);
+            }
+            if (currentVal && allCategories.includes(currentVal)) select.value = currentVal;
+        }
+    }
+}
+
 function loadProducts(){
     fetch('/api/products').then(function(r){return r.json()}).then(function(d){
         if(d.success){
             allProducts=d.products;
-            var html='<div class="stats"><div class="stat"><div class="num">'+allProducts.length+'</div><div class="label">Jami</div></div><div class="stat"><div class="num">'+allProducts.reduce(function(s,p){return s+p.in_stock;},0)+'</div><div class="label">Qoldiq</div></div></div><div class="card"><h3>📦 Mahsulotlar</h3><div class="table-wrap"><table><thead><tr><th>Rasm</th><th>Nomi</th><th>Kat.</th><th>Narx</th><th>Qoldiq</th><th>Amal</th></tr></thead><tbody>';
-            allProducts.forEach(function(p){
-                html+='<tr><td><img src="'+p.image+'" onerror="this.src=\'https://placehold.co/45\'"></td><td><strong>'+p.name+'</strong></td><td>'+ (catNames[p.category]||p.category) +'</td><td><strong style="color:var(--blue)">'+p.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')+'</strong></td><td><span class="badge '+(p.in_stock>10?'badge-green':p.in_stock>5?'badge-yellow':'badge-red')+'">'+p.in_stock+'</span></td><td><button class="btn btn-blue btn-sm" onclick="editProduct(\''+p.id+'\')">✏️</button> <button class="btn btn-red btn-sm" onclick="delProd(\''+p.id+'\')">🗑</button></td></tr>';
-            });
+            var totalStock = 0;
+            for (var i = 0; i < allProducts.length; i++) totalStock += allProducts[i].in_stock;
+            var html='<div class="stats"><div class="stat"><div class="num">'+allProducts.length+'</div><div class="label">Jami</div></div><div class="stat"><div class="num">'+totalStock+'</div><div class="label">Qoldiq</div></div></div><div class="card"><h3>📦 Mahsulotlar</h3><div class="table-wrap"><table><thead><tr><th>Rasm</th><th>Nomi</th><th>Kat.</th><th>Narx</th><th>Qoldiq</th><th>Amal</th></tr></thead><tbody>';
+            for (var i = 0; i < allProducts.length; i++) {
+                var p = allProducts[i];
+                var badgeClass = p.in_stock>10?'badge-green':p.in_stock>5?'badge-yellow':'badge-red';
+                html+='<tr><td><img src="'+p.image+'" onerror="this.src=\'https://placehold.co/45\'"></td><td><strong>'+escapeHtml(p.name)+'</strong></td><td>'+ (catNames[p.category]||p.category) +'</td><td><strong style="color:var(--blue)">'+formatNumber(p.price)+'</strong></td><td><span class="badge '+badgeClass+'">'+p.in_stock+'</span></td><td><button class="btn btn-blue btn-sm" onclick="editProduct(\''+p.id+'\')">✏️</button> <button class="btn btn-red btn-sm" onclick="delProd(\''+p.id+'\')">🗑</button></td></tr>';
+            }
             html+='</tbody></table></div></div>';
             document.getElementById('tabContent').innerHTML=html;
         }
     });
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
 function editProduct(id){
-    var p=allProducts.find(function(x){return x.id===id;});
-    if(!p)return;
-    document.getElementById('editId').value=p.id;
-    document.getElementById('editName').value=p.name;
-    document.getElementById('editCat').value=p.category;
-    document.getElementById('editPrice').value=p.price;
-    document.getElementById('editOldPrice').value=p.old_price||'';
-    document.getElementById('editStock').value=p.in_stock;
-    document.getElementById('editDisc').value=p.discount||0;
-    document.getElementById('editImg').value=p.image;
-    document.getElementById('editDesc').value=p.description||'';
+    var p = null;
+    for (var i = 0; i < allProducts.length; i++) {
+        if (allProducts[i].id === id) { p = allProducts[i]; break; }
+    }
+    if(!p) return;
+    updateCategorySelects();
+    document.getElementById('editId').value = p.id;
+    document.getElementById('editName').value = p.name;
+    document.getElementById('editCat').value = p.category;
+    document.getElementById('editPrice').value = p.price;
+    document.getElementById('editOldPrice').value = p.old_price || '';
+    document.getElementById('editStock').value = p.in_stock;
+    document.getElementById('editDisc').value = p.discount || 0;
+    document.getElementById('editImg').value = p.image;
+    document.getElementById('editDesc').value = p.description || '';
     document.getElementById('editModal').classList.add('show');
 }
 function closeEditModal(){document.getElementById('editModal').classList.remove('show');}
@@ -231,9 +272,9 @@ function saveEdit(e){
         name:document.getElementById('editName').value,
         category:document.getElementById('editCat').value,
         price:parseInt(document.getElementById('editPrice').value),
-        old_price:parseInt(document.getElementById('editOldPrice').value)||parseInt(document.getElementById('editPrice').value),
-        in_stock:parseInt(document.getElementById('editStock').value)||0,
-        discount:parseInt(document.getElementById('editDisc').value)||0,
+        old_price:parseInt(document.getElementById('editOldPrice').value) || parseInt(document.getElementById('editPrice').value),
+        in_stock:parseInt(document.getElementById('editStock').value) || 0,
+        discount:parseInt(document.getElementById('editDisc').value) || 0,
         image:document.getElementById('editImg').value,
         description:document.getElementById('editDesc').value
     };
@@ -248,7 +289,11 @@ function delProd(id){
 
 function showAddForm(){
     uploadedImage='';
-    document.getElementById('tabContent').innerHTML='<div class="card"><h3>➕ Yangi Mahsulot</h3><form onsubmit="addProd(event)"><div class="form-grid"><div class="form-group full"><label>📸 Rasm</label><div class="file-box" onclick="document.getElementById(\'fileInput\').click()"><i class="fa-solid fa-cloud-arrow-up"></i><p>Rasm yuklash (png, jpg)</p><img id="previewImg" style="display:none;"><input type="file" id="fileInput" accept="image/*" onchange="uploadFile(this)"></div><div id="uploadStatus" style="margin-top:6px;font-size:12px;display:none;"></div></div><div class="form-group"><label>Nomi *</label><input id="aname" required></div><div class="form-group"><label>Kategoriya</label><select id="acat">'+allCategories.map(function(c){return '<option value="'+c+'">'+catNames[c]+'</option>';}).join('')+'</select></div><div class="form-group"><label>Narx *</label><input type="number" id="aprice" required></div><div class="form-group"><label>Eski narx</label><input type="number" id="aoldprice"></div><div class="form-group"><label>Soni</label><input type="number" id="astock" value="10"></div><div class="form-group"><label>Chegirma %</label><input type="number" id="adisc" value="0"></div><div class="form-group full"><label>Tavsif</label><textarea id="adesc" rows="2"></textarea></div></div><button type="submit" class="btn btn-blue" style="margin-top:12px;padding:12px 24px;">➕ Qo\'shish</button></form></div>';
+    var catOptions = '';
+    for (var i = 0; i < allCategories.length; i++) {
+        catOptions += '<option value="'+allCategories[i]+'">'+(catNames[allCategories[i]]||allCategories[i])+'</option>';
+    }
+    document.getElementById('tabContent').innerHTML='<div class="card"><h3>➕ Yangi Mahsulot</h3><form onsubmit="addProd(event)"><div class="form-grid"><div class="form-group full"><label>📸 Rasm</label><div class="file-box" onclick="document.getElementById(\'fileInput\').click()"><i class="fa-solid fa-cloud-arrow-up"></i><p>Rasm yuklash (png, jpg)</p><img id="previewImg" style="display:none;"><input type="file" id="fileInput" accept="image/*" onchange="uploadFile(this)"></div><div id="uploadStatus" style="margin-top:6px;font-size:12px;display:none;"></div></div><div class="form-group"><label>Nomi *</label><input id="aname" required></div><div class="form-group"><label>Kategoriya</label><select id="acat">'+catOptions+'</select></div><div class="form-group"><label>Narx *</label><input type="number" id="aprice" required></div><div class="form-group"><label>Eski narx</label><input type="number" id="aoldprice"></div><div class="form-group"><label>Soni</label><input type="number" id="astock" value="10"></div><div class="form-group"><label>Chegirma %</label><input type="number" id="adisc" value="0"></div><div class="form-group full"><label>Tavsif</label><textarea id="adesc" rows="2"></textarea></div></div><button type="submit" class="btn btn-blue" style="margin-top:12px;padding:12px 24px;">➕ Qo\'shish</button></form></div>';
 }
 
 function uploadFile(input){
@@ -272,78 +317,133 @@ function addProd(e){
 function loadOrders(){
     fetch('/api/orders').then(function(r){return r.json()}).then(function(d){
         if(d.success){
-            var pending=d.orders.filter(function(o){return o.status==='pending';}).length;
-            var paid=d.orders.filter(function(o){return o.payment_status==='paid';}).length;
-            var total=d.orders.reduce(function(s,o){return s+o.total;},0);
-            var html='<div class="stats"><div class="stat"><div class="num">'+d.orders.length+'</div><div class="label">Jami buyurtma</div></div><div class="stat"><div class="num" style="color:var(--orange);">'+pending+'</div><div class="label">Kutilmoqda</div></div><div class="stat"><div class="num" style="color:var(--green);">'+paid+'</div><div class="label">To\'langan</div></div><div class="stat"><div class="num">'+total.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')+'</div><div class="label">so\'m</div></div></div><div class="card"><h3>📋 Buyurtmalar</h3>';
+            var pending=0, paid=0, total=0;
+            for (var i = 0; i < d.orders.length; i++) {
+                var o = d.orders[i];
+                if(o.status==='pending') pending++;
+                if(o.payment_status==='paid') paid++;
+                total += o.total;
+            }
+            var html='<div class="stats"><div class="stat"><div class="num">'+d.orders.length+'</div><div class="label">Jami buyurtma</div></div><div class="stat"><div class="num" style="color:var(--orange);">'+pending+'</div><div class="label">Kutilmoqda</div></div><div class="stat"><div class="num" style="color:var(--green);">'+paid+'</div><div class="label">To\'langan</div></div><div class="stat"><div class="num">'+formatNumber(total)+'</div><div class="label">so\'m</div></div></div><div class="card"><h3>📋 Buyurtmalar</h3>';
             if(d.orders.length===0)html+='<p style="color:#6B7280;text-align:center;padding:30px;">Buyurtmalar yo\'q</p>';
-            else d.orders.forEach(function(o){
-                var statusColor=o.status==='pending'?'badge-yellow':o.status==='delivered'?'badge-green':'badge-blue';
-                var payColor=o.payment_status==='paid'?'badge-green':o.payment_status==='cash'?'badge-blue':'badge-red';
-                html+='<div class="order-card">';
-                html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:4px;">';
-                html+='<span class="order-id">#'+o.order_id+'</span>';
-                html+='<div style="display:flex;gap:4px;">';
-                html+='<span class="badge '+statusColor+'">'+(o.status_text||o.status)+'</span>';
-                html+='<span class="badge '+payColor+'">'+(o.payment_status_text||'To\'lov: -')+'</span>';
-                html+='</div></div>';
-                
-                html+='<div class="order-detail">';
-                html+='<div><strong>👤 Mijoz</strong>'+o.customer_name+'</div>';
-                html+='<div><strong>📱 Telefon</strong>'+o.phone+'</div>';
-                html+='<div><strong>💰 Jami</strong>'+o.total.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' so\'m</div>';
-                html+='<div><strong>💳 To\'lov</strong>'+(o.payment_method==='cash'?'Naqd pul':o.payment_method.toUpperCase())+'</div>';
-                html+='<div><strong>📅 Sana</strong>'+new Date(o.created_at).toLocaleDateString()+'</div>';
-                if(o.address && o.address!=='Manzilni tanlang'){
-                    html+='<div><strong>📍 Manzil</strong>'+o.address.substring(0,50)+'... <a href="https://www.google.com/maps/search/'+encodeURIComponent(o.address)+'" target="_blank" class="map-btn">🗺️ Xarita</a></div>';
+            else {
+                for (var i = 0; i < d.orders.length; i++) {
+                    var o = d.orders[i];
+                    var statusColor=o.status==='pending'?'badge-yellow':o.status==='delivered'?'badge-green':'badge-blue';
+                    var payColor=o.payment_status==='paid'?'badge-green':o.payment_status==='cash'?'badge-blue':'badge-red';
+                    html+='<div class="order-card">';
+                    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:4px;">';
+                    html+='<span class="order-id">#'+o.order_id+'</span>';
+                    html+='<div style="display:flex;gap:4px;">';
+                    html+='<span class="badge '+statusColor+'">'+(o.status_text||o.status)+'</span>';
+                    html+='<span class="badge '+payColor+'">'+(o.payment_status_text||'To\'lov: -')+'</span>';
+                    html+='</div></div>';
+                    
+                    html+='<div class="order-detail">';
+                    html+='<div><strong>👤 Mijoz</strong>'+escapeHtml(o.customer_name)+'</div>';
+                    html+='<div><strong>📱 Telefon</strong>'+escapeHtml(o.phone)+'</div>';
+                    html+='<div><strong>💰 Jami</strong>'+formatNumber(o.total)+' so\'m</div>';
+                    html+='<div><strong>💳 To\'lov</strong>'+(o.payment_method==='cash'?'Naqd pul':o.payment_method.toUpperCase())+'</div>';
+                    html+='<div><strong>📅 Sana</strong>'+new Date(o.created_at).toLocaleDateString()+'</div>';
+                    if(o.address && o.address!=='Manzilni tanlang'){
+                        html+='<div><strong>📍 Manzil</strong>'+escapeHtml(o.address.substring(0,50))+'... <a href="https://www.google.com/maps/search/'+encodeURIComponent(o.address)+'" target="_blank" class="map-btn">🗺️ Xarita</a></div>';
+                    }
+                    html+='</div>';
+                    
+                    html+='<div style="margin-top:8px;padding:8px;background:#F9FAFB;border-radius:8px;font-size:13px;color:#6B7280;">';
+                    html+='<strong style="color:#374151;">📦 Mahsulotlar:</strong><br>';
+                    if(o.items) {
+                        for (var j = 0; j < o.items.length; j++) {
+                            var item = o.items[j];
+                            html+='• '+escapeHtml(item.name)+' × '+item.quantity+' = '+formatNumber(item.price*item.quantity)+' so\'m<br>';
+                        }
+                    }
+                    html+='</div>';
+                    
+                    // TUZATILGAN QISM 1: Status o'zgartirish select (to'g'ri onchange bilan)
+                    if(o.status==='pending'){
+                        html+='<select id="statusSelect_'+o.order_id+'" onchange="changeStatus(\''+o.order_id+'\', this.value)" style="margin-top:8px;padding:8px;border-radius:6px;border:1px solid #E5E7EB;width:100%;font-size:12px;">';
+                        html+='<option value="pending" '+(o.status==='pending'?'selected':'')+'>⏳ Kutilmoqda</option>';
+                        html+='<option value="confirmed" '+(o.status==='confirmed'?'selected':'')+'>✅ Tasdiqlangan</option>';
+                        html+='<option value="delivered" '+(o.status==='delivered'?'selected':'')+'>🚚 Yetkazilgan</option>';
+                        html+='<option value="cancelled" '+(o.status==='cancelled'?'selected':'')+'>❌ Bekor qilingan</option>';
+                        html+='</select>';
+                    }
+                    html+='</div>';
                 }
-                html+='</div>';
-                
-                html+='<div style="margin-top:8px;padding:8px;background:#F9FAFB;border-radius:8px;font-size:13px;color:#6B7280;">';
-                html+='<strong style="color:#374151;">📦 Mahsulotlar:</strong><br>';
-                html+=(o.items?o.items.map(function(i){return '• '+i.name+' × '+i.quantity+' = '+(i.price*i.quantity).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' so\'m';}).join('<br>'):'');
-                html+='</div>';
-                
-                if(o.status==='pending'){
-                    html+='<select onchange="changeStatus(\''+o.order_id+'\',this.value)" style="margin-top:8px;padding:8px;border-radius:6px;border:1px solid #E5E7EB;width:100%;font-size:12px;">';
-                    html+='<option value="pending">⏳ Kutilmoqda</option>';
-                    html+='<option value="confirmed">✅ Tasdiqlangan</option>';
-                    html+='<option value="delivered">🚚 Yetkazilgan</option>';
-                    html+='<option value="cancelled">❌ Bekor qilingan</option>';
-                    html+='</select>';
-                }
-                html+='</div>';
-            });
+            }
             html+='</div>';
             document.getElementById('tabContent').innerHTML=html;
         }
     });
 }
 
-function changeStatus(oid,status){
-    fetch('/api/admin/orders/'+oid+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})})
-    .then(function(r){return r.json()}).then(function(d){if(d.success){alert('✅ Yangilandi!');loadOrders();}});
+// TUZATILGAN QISM 2: changeStatus funksiyasi to'liq ishlaydi
+function changeStatus(oid, status){
+    if(!oid || !status) return;
+    fetch('/api/admin/orders/'+oid+'/status', {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({status: status})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if(d.success){
+            alert('✅ Holat yangilandi!');
+            loadOrders();
+        } else {
+            alert('❌ Xatolik: ' + (d.message || 'Noma\'lum'));
+        }
+    })
+    .catch(function(err){
+        alert('❌ Server xatosi');
+        console.error(err);
+    });
 }
 
+// TUZATILGAN QISM 3: Kategoriyalar bilan ishlash (to'liq qayta yozildi)
 function loadCategories(){
     var html='<div class="card"><h3>🏷️ Kategoriyalar</h3><div style="margin-bottom:16px;">';
-    allCategories.forEach(function(c){html+='<span class="tag">'+catNames[c]+' <button onclick="deleteCat(\''+c+'\')">&times;</button></span>';});
-    html+='</div><h4 style="margin-bottom:8px;">➕ Yangi kategoriya</h4><div style="display:flex;gap:8px;"><input id="newCatName" placeholder="Nomi" style="flex:1;padding:10px;border:2px solid #E5E7EB;border-radius:8px;font-size:13px;"><input id="newCatId" placeholder="ID (lotin)" style="flex:1;padding:10px;border:2px solid #E5E7EB;border-radius:8px;font-size:13px;"><button class="btn btn-blue" onclick="addCat()">Qo\'shish</button></div></div>';
+    for (var i = 0; i < allCategories.length; i++) {
+        var c = allCategories[i];
+        html+='<span class="tag">'+(catNames[c]||c)+' <button onclick="deleteCat(\''+c+'\')">&times;</button></span>';
+    }
+    html+='</div><h4 style="margin-bottom:8px;">➕ Yangi kategoriya</h4><div style="display:flex;gap:8px;flex-wrap:wrap;"><input id="newCatName" placeholder="Nomi" style="flex:1;min-width:150px;padding:10px;border:2px solid #E5E7EB;border-radius:8px;font-size:13px;"><input id="newCatId" placeholder="ID (lotin, unique)" style="flex:1;min-width:150px;padding:10px;border:2px solid #E5E7EB;border-radius:8px;font-size:13px;"><button class="btn btn-blue" onclick="addCat()">Qo\'shish</button></div></div>';
     document.getElementById('tabContent').innerHTML=html;
 }
+
 function addCat(){
-    var name=document.getElementById('newCatName').value.trim();
-    var id=document.getElementById('newCatId').value.trim().toLowerCase();
-    if(!name||!id){alert('Nomi va ID kerak!');return;}
-    if(allCategories.includes(id)){alert('Bu ID mavjud!');return;}
-    allCategories.push(id);catNames[id]=name;
-    alert('✅ Qo\'shildi!');loadCategories();
+    var name = document.getElementById('newCatName').value.trim();
+    var id = document.getElementById('newCatId').value.trim().toLowerCase();
+    if(!name || !id){ alert('Nomi va ID kerak!'); return; }
+    if(allCategories.includes(id)){ alert('Bu ID mavjud!'); return; }
+    allCategories.push(id);
+    catNames[id] = name;
+    updateCategorySelects();
+    alert('✅ Qo\'shildi!');
+    loadCategories();
+    // Agar hozirgi tab products yoki add bo'lsa, ularni yangilash kerak
+    var activeBtn = document.querySelector('.sidebar button.active');
+    if(activeBtn) {
+        var btnText = activeBtn.textContent;
+        if(btnText.includes('Mahsulotlar')) loadProducts();
+        else if(btnText.includes('Qo\'shish')) showAddForm();
+    }
 }
+
 function deleteCat(id){
-    if(!confirm('O\'chirilsinmi?'))return;
-    allCategories=allCategories.filter(function(c){return c!==id;});
+    if(!confirm('"'+ (catNames[id]||id) +'" kategoriyasini o\'chirilsinmi?')) return;
+    allCategories = allCategories.filter(function(c){ return c !== id; });
     delete catNames[id];
-    alert('O\'chirildi!');loadCategories();
+    updateCategorySelects();
+    alert('O\'chirildi!');
+    loadCategories();
+    var activeBtn = document.querySelector('.sidebar button.active');
+    if(activeBtn) {
+        var btnText = activeBtn.textContent;
+        if(btnText.includes('Mahsulotlar')) loadProducts();
+        else if(btnText.includes('Qo\'shish')) showAddForm();
+    }
 }
 </script>
 </body>
