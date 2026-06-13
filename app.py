@@ -62,9 +62,17 @@ def save_json(f, data):
     with open(f, 'w', encoding='utf-8') as fl: json.dump(data, fl, ensure_ascii=False, indent=2)
 
 def load_products():
-    p = load_json(Config.PRODUCTS_FILE)
-    if not p: save_json(Config.PRODUCTS_FILE, DEFAULT_PRODUCTS); return DEFAULT_PRODUCTS
-    return p
+    # products.json mavjud bo'lmasa default mahsulotlarni yaratish
+    if not os.path.exists(Config.PRODUCTS_FILE):
+        save_json(Config.PRODUCTS_FILE, DEFAULT_PRODUCTS)
+        return DEFAULT_PRODUCTS
+
+    try:
+        with open(Config.PRODUCTS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Products yuklashda xato: {e}")
+        return []
 
 def save_products(p): save_json(Config.PRODUCTS_FILE, p)
 def load_orders(): return load_json(Config.ORDERS_FILE, [])
